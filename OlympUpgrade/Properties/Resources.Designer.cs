@@ -63,9 +63,39 @@ namespace OlympUpgrade.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap InstalaciaKomponetov {
+            get {
+                object obj = ResourceManager.GetObject("InstalaciaKomponetov", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap KrosPersonalistikaMzdy {
             get {
                 object obj = ResourceManager.GetObject("KrosPersonalistikaMzdy", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap PC {
+            get {
+                object obj = ResourceManager.GetObject("PC", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap PC1 {
+            get {
+                object obj = ResourceManager.GetObject("PC1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

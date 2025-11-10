@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -34,7 +35,7 @@ namespace OlympUpgrade
 
         public const string VERZIA_NEZNAMA = "(Nedefinované)";
 
-        public const string DEST_PATH_NEZNAMY = "Vyberte inštalaèný adresár.";
+        public const string DEST_PATH_NEZNAMY = "Vyberte inštalačný adresár.";
 
         public const string SUBOR_EXE = "Olymp.exe";
 
@@ -183,6 +184,15 @@ namespace OlympUpgrade
 
         public static int KOPIRUJ_LICENCIU;  // parameter z instalshieldu, ci sa ma lic skopcit alebo nie, ak je daky konflikt
 
+
+        public const int PCD_POCITAC = 0;
+        public const int PCD_INSTALACKY = 1;
+
+        public const int LIC_CHYBNA = -1;
+        public const int LIC_NEEXISTUJE = 0;
+        public const int LIC_OSTRA = 1;
+        public const int LIC_UPDATE = 2;
+
         public static bool ZmazHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky)
         {
             try
@@ -213,7 +223,7 @@ namespace OlympUpgrade
             vystup = null;
             try
             {
-                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, true))
+                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, RegistryRights.QueryValues))
                 {
                     if (hKey != null)
                     {
@@ -226,12 +236,47 @@ namespace OlympUpgrade
             catch { return false; }
         }
 
+        public static bool MamDostatocnyFramework()
+        {
+            if (CitajHodnotuReg(Registry.LocalMachine,
+                                    @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full",
+                                    "Release",
+                                    out object val))
+            {
+                if (val is int verzia
+                    && verzia >= 528040) // 528040 -> .NET Framework 4.8
+                    return true;
+            }
+
+            return false;
+        }
+
         public static string PridajLomitko(string path)
         {
             if (!string.IsNullOrEmpty(path) && !path.EndsWith("\\"))
                 return path + "\\";
 
             return path;
+        }
+
+        /// <summary>
+        /// ci existuje subor
+        /// </summary>
+        /// <param name="meno"></param>
+        /// <returns></returns>
+        public static bool ExistujeSubor(string meno)
+        {
+            if (string.IsNullOrWhiteSpace(meno))
+                return false;
+
+            if (meno.EndsWith("\\"))
+                meno = meno.Substring(0, meno.Length - 1);
+
+            try
+            {
+                return File.Exists(meno);
+            }
+            catch { return false; }
         }
 
         /// <summary>
@@ -300,7 +345,7 @@ namespace OlympUpgrade
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);
 
-            Application.Exit();
+            System.Windows.Forms.Application.Exit();
         }
 
         /// <summary>
@@ -464,7 +509,7 @@ namespace OlympUpgrade
                                     @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACRORD32.EXE",
                                     "",
                                     out object _))
-                return -1; 
+                return -1;
 
             if (CitajHodnotuReg(Registry.LocalMachine,
                                     @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACROBAT.EXE",
@@ -478,7 +523,7 @@ namespace OlympUpgrade
         /// <summary>
         /// restartuje pocitac
         /// </summary>
-        public static bool Restart() 
+        public static bool Restart()
         {
             try
             {
@@ -493,7 +538,6 @@ namespace OlympUpgrade
                 return true;
             }
             catch { return false; }
-            
         }
     }
 }

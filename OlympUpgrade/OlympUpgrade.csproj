@@ -40,6 +40,7 @@
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -54,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Declare.cs" />
+    <Compile Include="kodovanie.cs" />
     <Compile Include="OlympUpgrade.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -68,18 +70,18 @@
     <EmbeddedResource Include="Properties\licenses.licx" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -91,6 +93,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\KrosPersonalistikaMzdy.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\InstalaciaKomponetov.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PC.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PC1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PC2.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
