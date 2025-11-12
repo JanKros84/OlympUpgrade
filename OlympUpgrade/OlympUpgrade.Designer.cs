@@ -519,10 +519,10 @@
             // 
             // lblDestFile
             // 
-            this.lblDestFile.AutoSize = true;
+            this.lblDestFile.AutoEllipsis = true;
             this.lblDestFile.Location = new System.Drawing.Point(104, 166);
             this.lblDestFile.Name = "lblDestFile";
-            this.lblDestFile.Size = new System.Drawing.Size(11, 13);
+            this.lblDestFile.Size = new System.Drawing.Size(389, 13);
             this.lblDestFile.TabIndex = 7;
             this.lblDestFile.Text = "*";
             // 

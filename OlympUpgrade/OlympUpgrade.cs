@@ -7,7 +7,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Management;
-using System.Threading;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace OlympUpgrade
@@ -24,6 +25,12 @@ namespace OlympUpgrade
         private double _PocetNaTik;
 
         private long _AktTik;
+
+        List<string> _Chybne = new List<string>();
+        List<string> _Spravne = new List<string>();
+        List<string> _Preskocene = new List<string>();
+        //Dictionary<string, object> _PomCol = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        List<string> _PomCol = new List<string>();
 
         public OlympUpgrade()
         {
@@ -158,14 +165,638 @@ namespace OlympUpgrade
             btnOk.Visible = false;
             btnStorno.Enabled = false;
             OverLicenciu();
-            //OverVolneMiesto();
-            //// OverArchiv         'toto s novym komponentom nevieme
-            //// VymazSuboryStarejAlfy
-            //KopirujSubory();
+            OverVolneMiesto();
+            // OverArchiv         'toto s novym komponentom nevieme
+            // VymazSuboryStarejAlfy
+            KopirujSubory();
             //InstalujHotFixPreMapi();
             //UlozDoRegistrovVerziu();
             //Thread.Sleep(500); //iba kvoli tomu, aby to neprefrcalo tak rychlo
             //ZobrazVysledok();
+        }
+
+        /// <summary>
+        /// Prida subory, ktore nebolo mozne nakopirovat kvoli chybe
+        /// </summary>
+        public void KopirujSubory()
+        {
+            int i, zipRes, zipRes2, BolaChyba, pocet;
+            string pom, pom1, povodnaVerziaX;
+            long povodnaVerzia, chyba;
+            bool prepis;
+            var neprepisovatDBS = new List<string>(); ;
+            //Dim chilkatEntry As New ChilkatZipEntry2
+
+            ProgresiaPreset(0);
+
+            lblDestFile.Text = "Kopírovanie súborov ...";
+            lblDestFile.Refresh();
+
+            using (ZipArchive zip = ZipFile.OpenRead(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP)))
+            {
+                ProgresiaPreset(zip.Entries.Count);
+                var tempAdr = Declare.DajTemp(Declare.AKT_ADRESAR);
+                tempAdr = Path.Combine(tempAdr, "OlympUpgradeTempZip");
+                //zip.ExtractToDirectory(tempAdr);
+
+                _Chybne.Clear();
+                _Spravne.Clear();
+                _Preskocene.Clear();
+
+                _PomCol.Clear();
+
+                chyba = 1;
+
+                if (zip.Entries.Count > 0)
+                {
+                    // toto plati pre adresarik data
+                    neprepisovatDBS.Clear();
+
+                    var dataEntrie = zip.Entries.Where(e => e.FullName.ToUpper().Contains(@"DATA/")
+                                                                    && e.Length > 0);
+
+                    foreach (var entry in dataEntrie)
+                    {
+                        var zipPath = entry.FullName.Replace('\\', '/');
+
+                        // iba položky pod "DATA/"
+                        if (zipPath.StartsWith("DATA/", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // plná cieľová cesta na disku
+                            var destPath = Path.Combine(Declare.DEST_PATH, zipPath.Replace('/', Path.DirectorySeparatorChar));
+
+                            if (!File.Exists(destPath))
+                            {
+                                prepis = true;
+                                foreach (var dbName in neprepisovatDBS)
+                                {
+                                    var guardedPrefix = "data/pripojenedata/" + dbName;
+                                    if (zipPath.StartsWith(guardedPrefix, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        prepis = false;
+                                        break;
+                                    }
+                                }
+
+                                if (prepis)
+                                {
+                                    try
+                                    {
+                                        entry.ExtractToFile(destPath, overwrite: true);
+                                    }
+                                    catch
+                                    {
+                                        _PomCol.Add(destPath);
+                                        chyba++;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // ak už existuje a je to MDB, pridaj jeho názov (bez prípony) do "neprepisovať"
+                                if (string.Equals(Path.GetExtension(zipPath), ".mdb", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var name = Path.GetFileNameWithoutExtension(zipPath).ToLowerInvariant();
+                                    neprepisovatDBS.Add(name);
+                                }
+                            }
+                        }
+
+                        ProgresiaTik();
+                    }
+                }
+
+                if (chyba != 1 || _PomCol.Count > 0)
+                {
+                    PridajChybu(); // call your method
+
+                    var target = Path.Combine(Declare.DEST_PATH, "DATA");
+
+                    MessageBox.Show(
+                        "Nastala chyba pri kopírovaní súborov do adresára " + target + Environment.NewLine + Environment.NewLine +
+                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                        Declare.TTITLE,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    );
+                }
+
+                // zmazem vsetky REPORTY\*.RPT okrem REPORTY\OB_FA*.RPT
+                try
+                {
+                    long parseVal = 0;
+                    povodnaVerziaX = DajVerziuProgramu();
+                    long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
+                    povodnaVerzia = parseVal * 100;
+
+                    parseVal = 0;
+                    povodnaVerziaX = povodnaVerziaX.Substring(povodnaVerziaX.IndexOf(".") + 1);
+                    long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
+                    povodnaVerzia = povodnaVerzia + parseVal;
+
+                    if (povodnaVerzia < 946)
+                    {
+                        var rep = Path.Combine(Declare.DEST_PATH, "REPORTY");
+                        if (Directory.Exists(rep))
+                        {
+                            foreach (var file in Directory.EnumerateFiles(rep))
+                                File.Delete(file);
+                        }
+                    }
+
+                    //vzdy mazem len systemove reporty a uzivatelske nechavam
+                    //---RPT REPORTY---
+                    VymazZostavy("Reporty\\", "rpt");
+                    VymazZostavy("Reporty\\", "repx");
+                    //---XLS REPORTY---
+                    VymazZostavy("Reporty\\EXCEL\\", "xls");
+                    VymazZostavy("Reporty\\EXCEL\\", "pdf"); //v zostavach pre excel bude aj navod v pdf
+                                                             //---PDF REPORTY-- -
+                    VymazZostavy("Reporty\\PDF\\", "pdf");
+
+                }
+                catch { }
+
+                // --- rozbal systémové reporty podľa listov ---
+                RozbalZostavy(zip, "Reporty\\", "RPT", Declare.FILE_REPORTY_TXT);
+                RozbalZostavy(zip, "Reporty\\", "REPX", Declare.FILE_REPORTY_TXT);
+                RozbalZostavy(zip, "Reporty\\Excel\\", "XLS", Declare.FILE_REPORTY_EXCEL_TXT);
+                RozbalZostavy(zip, "Reporty\\Excel\\", "PDF", Declare.FILE_REPORTY_EXCEL_P_TXT);
+                RozbalZostavy(zip, "Reporty\\Pdf\\", "PDF", Declare.FILE_REPORTY_PDF_TXT);
+
+
+                // --- GRAFIKA\*.*  ---
+                _PomCol.Clear();
+                ExtractFilesExtensionOnPath(zip, "Grafika", "*");
+                CheckCopyException(Path.Combine(Declare.DEST_PATH, "Grafika"));
+
+                // --- SKRIPTY\CREATE\*.sql ---
+                _PomCol.Clear();
+                ExtractFilesExtensionOnPath(zip, "Skripty\\create\\", "sql");
+                CheckCopyException(Path.Combine(Declare.DEST_PATH, "Skripty", "create"));
+
+                // --- SKRIPTY\DROP\*.sql ---
+                _PomCol.Clear();
+                ExtractFilesExtensionOnPath(zip, "Skripty\\drop\\", "sql");
+                CheckCopyException(Path.Combine(Declare.DEST_PATH, "Skripty", "drop"));
+
+                // --- ZDROJE\*.* ---
+                _PomCol.Clear();
+                ExtractFilesExtensionOnPath(zip, "Zdroje", "*");
+                CheckCopyException(Path.Combine(Declare.DEST_PATH, "Zdroje"));
+
+                /*PripravPomCol();
+                zipRes = zip.UnzipMatching(target, "ZDROJE\\*.*", 0);
+                if (zipRes < 1 || PomCol.Count > 0)
+                {
+                    PridajChybu();
+                    MessageBox.Show(
+                        $"Nastala chyba pri kopírovaní súborov do adresára {target}ZDROJE\\\r\n\r\n" +
+                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                        Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }*/
+
+                // --- Vzory ---
+                var vzoryPath = Path.Combine(Declare.DEST_PATH, "Vzory");
+                if (Directory.Exists(vzoryPath))
+                    NastavPrava(vzoryPath, "*.*", FileAttributes.Normal);
+
+                _PomCol.Clear();
+                ExtractFilesExtensionOnPath(zip, "Zdroje", "*");
+                CheckCopyException(vzoryPath);
+                if (_PomCol.Count > 0)
+                    NastavPrava(Path.Combine(vzoryPath, "Vzory\\"), "*.*", FileAttributes.ReadOnly);
+                /*
+                // --- Kopírovanie vybraných súborov (ak existujú v AKT_ADRESAR) ---
+                CopyIfExists(AKT_ADRESAR, target, "OLYMP.CHM", Spravne, Chybne, NastavCestu, Title);
+                CopyIfExists(AKT_ADRESAR, target, "CRV2Kros.exe", Spravne, Chybne, NastavCestu, Title);
+                CopyIfExists(AKT_ADRESAR, target, "ADOWrapper.dll", Spravne, Chybne, NastavCestu, Title);
+                CopyIfExists(AKT_ADRESAR, target, "itextsharp.dll", Spravne, Chybne, NastavCestu, Title);
+                CopyIfExists(AKT_ADRESAR, target, "Kros.BankTransfers.dll", Spravne, Chybne, NastavCestu, Title);
+
+                // --- Vymaz staré súbory ---
+                VymazStareSubory();
+
+                // --- SK\*.* ---
+                zipRes = zip.UnzipMatching(target, "SK\\*.*", 0);
+                if (zipRes < 1 || PomCol.Count > 0)
+                {
+                    PridajChybu();
+                    MessageBox.Show(
+                        $"Nastala chyba pri kopírovaní súborov do adresára {target}SK\\\r\n\r\n" +
+                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                        Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                // --- jednorazové súbory / exe / txt zo ZIPu ---
+                PripravPomCol();
+                int errCount = 0;
+                errCount += Unzip1(zip, target, "LEGISL.MDB");
+                errCount += Unzip1(zip, target, "OLYMP.chm");
+                errCount += Unzip1(zip, target, "CRV2Kros.exe");
+                errCount += Unzip1(zip, target, SUBOR_EXE);
+                errCount += Unzip1(zip, target, SUBOR_TeamViewer);
+                errCount += Unzip1(zip, target, SUBOR_ClickYes);
+                errCount += Unzip1(zip, target, "Kros FTP Uploader.exe");
+                errCount += Unzip1(zip, target, "Downloader.exe");
+                errCount += Unzip1(zip, target, "Aktivácia.exe");
+
+                // zoznamSuborov.txt
+                errCount += Unzip1(zip, target, "zoznamSuborov.txt");
+                var zoznamPath = Path.Combine(target, "zoznamSuborov.txt");
+                if (FileExists(zoznamPath))
+                {
+                    var content = LoadFile(zoznamPath);
+                    var lines = (content ?? "").Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in lines)
+                        errCount += Unzip1(zip, target, line.Trim());
+                }
+
+                if (errCount > 0)
+                {
+                    PridajChybu();
+                    MessageBox.Show(
+                        $"Nastala chyba pri kopírovaní súborov do adresára {target}\r\n\r\n" +
+                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                        Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                // DevExpress.*.dll
+                PripravPomCol();
+                zipRes = zip.UnzipMatching(target, "DevExpress.*.dll", 0);
+                if (zipRes < 1 || PomCol.Count > 0)
+                {
+                    PridajChybu();
+                    MessageBox.Show(
+                        $"Nastala chyba pri kopírovaní súborov do adresára {target}\r\n\r\n" +
+                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                        Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                // --- Close ZIP ---
+                zip.CloseZip();
+
+                // --- Presun ZIP/installer do UPGRADE ---
+                try
+                {
+                    var upgDir = Path.Combine(target, "UPGRADE\\");
+                    EnsureDir(upgDir);
+
+                    // presuň ZIP do UPGRADE
+                    var dstZip = Path.Combine(upgDir, SUBOR_ZIP);
+                    if (FileExists(dstZip)) File.Delete(dstZip);
+
+                    NastavCestu(Path.Combine(target, "UPGRADE\\" + SUBOR_ZIP));
+                    FileCopyOverwrite(zipPath, dstZip);
+                    Spravne.Add("UPGRADE\\" + SUBOR_ZIP);
+
+                    // pokus odstrániť pôvodný ZIP v targete (VB6: Kill UCase$(DEST_PATH & SUBOR_ZIP))
+                    var targetZip = Path.Combine(target, SUBOR_ZIP);
+                    if (FileExists(targetZip)) File.Delete(targetZip);
+                }
+                catch { }
+
+                try
+                {
+                    var upgDir = Path.Combine(target, "UPGRADE\\");
+                    EnsureDir(upgDir);
+
+                    // presun pôvodných inštalátorov
+                    var instOld = Path.Combine(target, SUBOR_INST);
+                    if (FileExists(instOld))
+                    {
+                        var dst = Path.Combine(upgDir, SUBOR_INST);
+                        if (FileExists(dst)) File.Delete(dst);
+                        FileCopyOverwrite(instOld, dst);
+                        File.Delete(instOld);
+                    }
+
+                    var instNew = Path.Combine(target, SUBOR_INST_NEW);
+                    if (FileExists(instNew))
+                    {
+                        var dst = Path.Combine(upgDir, SUBOR_INST_NEW);
+                        if (FileExists(dst)) File.Delete(dst);
+
+                        // VB6: Name ... As ... (move+rename)
+                        File.Move(instNew, dst);
+
+                        // počkaj krátko, kým sa systém „spamätá“
+                        var tries = 0;
+                        while (FileExists(instNew) && tries++ < 10)
+                        {
+                            Thread.Sleep(50);
+                        }
+                    }
+                }
+                catch { }
+                */
+                ProgresiaDone();
+
+                // VB6 volalo ZapisVysledokDoListu – tu to nechám na vás
+                // ZapisVysledokDoListu();
+            }
+        }
+
+        private void CheckCopyException(string path)
+        {
+            if (_PomCol.Count > 0)
+            {
+                PridajChybu();
+                MessageBox.Show(
+                    $"Nastala chyba pri kopírovaní súborov do adresára {path}\r\n\r\n" +
+                    "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                    Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public void RozbalZostavy(ZipArchive zip, string Cesta, string pripona, string subor)
+        {
+            //cesta v tvare: "REPORTY\"
+            //pripona v tvare: "rpt"
+            _PomCol.Clear();
+            string destPath = ExtractFilesExtensionOnPath(zip, Cesta, pripona);
+
+
+            // 2) Rozbaliť konkrétny súbor/subset (Cesta + subor)
+            //_PomCol.Clear();
+            var fileName = Path.Combine(Cesta, subor).Replace('\\', '/');
+            var entryFile = zip.Entries
+                           .FirstOrDefault(e => string.Equals(e.FullName, fileName, StringComparison.OrdinalIgnoreCase)
+                                            && e.Length > 0);
+            if (entryFile != null)
+                ExtractToFile(destPath, entryFile);
+            else
+                _PomCol.Add($"Nenasiel sa: '{destPath}'");
+
+            if (_PomCol.Count > 0)
+            {
+                PridajChybu();
+                MessageBox.Show(
+                    "Nastala chyba pri kopírovaní súborov do adresára " +
+                    Path.Combine(Declare.DEST_PATH, Cesta ?? "") + Environment.NewLine + Environment.NewLine +
+                    "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                    Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            // 3) Volanie tvojej existujúcej post-procedúry           
+            NastavDlheNazvy(Cesta, "." + pripona, 50, subor);
+        }
+
+        private string ExtractFilesExtensionOnPath(ZipArchive zip, string path, string extension)
+        {
+            extension = (extension ?? "").ToLowerInvariant();
+            path = path.Last() == '\\' ? path.Substring(0, path.Length - 1) : path;
+            path = path.Last() == '/' ? path.Substring(0, path.Length - 1) : path;
+            path = path.Replace('\\', '/');
+            var destPath = Path.Combine(Declare.DEST_PATH, path);
+            Directory.CreateDirectory(destPath);
+
+            // 1) Rozbaliť všetky *.pripona v podsložke Cesta
+            //int zipRes = UnzipMatching(Declare.DEST_PATH, mask1, PomCol);
+            string regexMask = $@"(?i)^{Regex.Escape(path)}[\\/][^\\/]+\.{extension}$";
+
+            var dataEntrie = zip.Entries.Where(e => Regex.IsMatch(e.FullName, regexMask) && e.Length > 0);
+            if (dataEntrie.Count() > 0)
+            {
+                foreach (var entry in dataEntrie)
+                {
+                    ExtractToFile(destPath, entry);
+                }
+            }
+            else
+                _PomCol.Add($"Ziadna zhoda regex: '{regexMask}'");
+            return destPath;
+        }
+
+        private void ExtractToFile(string destPath, ZipArchiveEntry entry)
+        {
+            try
+            {
+                entry.ExtractToFile(Path.Combine(destPath, entry.Name), overwrite: true);
+                lblDestFile.Text = $"{entry.FullName}";
+                lblDestFile.Refresh();
+            }
+            catch (Exception ex)
+            {
+                _PomCol.Add($"{entry.FullName} ex: {ex.Message}");
+            }
+            ProgresiaTik();
+        }
+
+        private void NastavDlheNazvy(string cesta, string pripona, int hranica, string txtSubor)
+        {
+            // Build absolute target directory
+            var destDir = Path.GetFullPath(Path.Combine(Declare.DEST_PATH, cesta ?? string.Empty));
+            Directory.CreateDirectory(destDir);
+
+            // Mapping file (e.g., REPORTY.TXT) lives in destDir
+            var mappingPath = Path.Combine(destDir, txtSubor);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            if (!File.Exists(mappingPath)) return;
+
+            using (var sr = new StreamReader(mappingPath, Encoding.Default, detectEncodingFromByteOrderMarks: true))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    if (string.Equals(line, "EOF", StringComparison.OrdinalIgnoreCase)) break;
+                    if (line.Length < 6) continue;
+
+                    // VB6 Mid$(s,1,6) and Mid$(s,8)
+                    var key = line.Substring(0, Math.Min(6, line.Length));
+                    var value = line.Length >= 8 ? line.Substring(7) : string.Empty;
+                    map[key] = (value ?? string.Empty).Trim();
+                }
+            }
+
+
+            // Enumerate files matching *{pripona} (VB6 Dir$ with "*"+pripona)
+            foreach (var filePath in Directory.EnumerateFiles(destDir, "*" + pripona, SearchOption.TopDirectoryOnly))
+            {
+                var fileName = Path.GetFileName(filePath);
+
+                // VB6: SetAttr ... vbNormal (clear RO/hidden)
+                try { File.SetAttributes(filePath, FileAttributes.Normal); } catch { }
+
+                // VB6: Mid$(s,4,1) = "-" And Val(Mid$(s,5,2)) < Hranica
+                if (fileName.Length >= 6 && fileName[3] == '-')
+                {
+                    if (int.TryParse(fileName.Substring(4, 2), out var num) && num < hranica)
+                    {
+                        var key = fileName.Substring(0, 6); // e.g., "ABC-12"
+                        if (map.TryGetValue(key, out var longName))
+                        {
+                            var newNameCore = key + "-" + longName;
+                            //newNameCore = RemoveInvalidFileNameChars(newNameCore);
+
+                            var newPath = Path.Combine(destDir, newNameCore + pripona);
+
+                            // Emulate overwrite: delete target if it exists
+                            try
+                            {
+                                //File.SetAttributes(newPath, FileAttributes.Normal);
+                                if (File.Exists(newPath))
+                                    File.Replace(filePath, newPath, null);
+                                else
+                                    File.Move(filePath, newPath);
+                            }
+                            catch { }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void VymazZostavy(string CestaKRep, string pripona)
+        {
+            //cesta v tvare: "REPORTY\"
+            //pripona v tvare: "rpt"
+            var dir = Path.Combine(Declare.DEST_PATH, CestaKRep ?? string.Empty);
+
+            // zmazem prvych 49 reportov
+            for (int i = 0; i <= 4; i++)
+            {
+                // maska: "???-0?*.rpt", "???-1?*.rpt", ...
+                string maska = $"???-{i}?*.{pripona}";
+
+                NastavPrava(dir, maska, FileAttributes.Normal);
+                try
+                {
+                    foreach (var path in Directory.GetFiles(dir, maska))
+                    {
+                        try { File.Delete(path); } catch { }
+                    }
+                }
+                catch { /* adresár neexistuje a pod. – pokračuj */ }
+            }
+        }
+
+        // CestaVym: adresár; sablona: maska s * a ?; prava: FileAttributes.Normal atď.
+        void NastavPrava(string CestaVym, string sablona, FileAttributes prava)
+        {
+            if (string.IsNullOrWhiteSpace(CestaVym) || !Directory.Exists(CestaVym))
+                return;
+
+            try
+            {
+                foreach (var path in Directory.GetFiles(CestaVym, sablona))
+                {
+                    try { File.SetAttributes(path, prava); } catch { }
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// prida subory, ktore nebolo mozne nakopirovat kvoli chybe
+        /// </summary>
+        void PridajChybu()
+        {
+            if (_PomCol != null && _PomCol.Count > 0)
+            {
+                foreach (var v in _PomCol)//.Values)
+                {
+                    _Chybne.Add("nedá sa prepísať\t" + v);
+                }
+            }
+        }
+
+        public void OverVolneMiesto()
+        {
+            double VolneMiesto, PotrebnaVelkost;
+            string prompt = string.Empty;
+
+            ProgresiaPreset(0);
+
+            lblDestFile.Text = "Kontrola voľného miesta ...";
+            lblDestFile.Refresh();
+            VolneMiesto = Declare.DiskSpaceKB(Declare.DEST_PATH);
+            PotrebnaVelkost = DajVelkostSuborovVZip(Declare.PridajLomitko(Declare.AKT_ADRESAR) + Declare.SUBOR_ZIP) / 1024d;
+
+
+            //TODO prec, kontroluje "Mzdy.lic"
+            if (Declare.DEST_PATH != Declare.AKT_ADRESAR
+                && Declare.ExistujeSubor(Declare.PridajLomitko(Declare.AKT_ADRESAR) + Declare.LICENCIA))
+            {
+                // PotrebnaVelkost = PotrebnaVelkost + FileLen(Declare.PridajLomitko(Declare.AKT_ADRESAR) & Declare.LICENCIA) / 1024;
+            }
+
+            if (VolneMiesto < 0 || PotrebnaVelkost > VolneMiesto)
+            {
+                var destDiskLetter = Path.GetPathRoot(Declare.DEST_PATH);
+                var potrebnaVelkostMB = Math.Ceiling(PotrebnaVelkost / 1024d + 2);
+                prompt = " Chcete pokračovať v inštalácii?\r\n\r\n" +
+                               $"Zvoľte Áno, ak ste si istý, že máte dostatok voľného miesta ({potrebnaVelkostMB} MB) na disku {destDiskLetter}. \r\n";
+
+                if (VolneMiesto < 0)
+                {
+                    prompt = $"Nastala chyba pri zisťovaní voľného miesta na cieľovom disku {destDiskLetter}." +
+                               prompt;
+                }
+                else if (PotrebnaVelkost > VolneMiesto)// * 1024 TODO ???) //Je malo miesta
+                {
+                    prompt = $"Na cieľovom disku {destDiskLetter} je nedostatok voľného miesta." +
+                                   prompt;
+                }
+
+                prompt += "V opačnom prípade zvoľte Nie a inštalácia bude ukončená. Uvoľnite požadované miesto na cieľovom disku " +
+                                "a potom opäť spustite program ";
+
+                if (Declare.KTO_VOLAL == Declare.VOLAL_INSTALL)
+                {
+                    prompt += Declare.PridajLomitko(Declare.AKT_ADRESAR) + Declare.MENO_EXE;
+                }
+                else if (Declare.KTO_VOLAL == Declare.VOLAL_UZIVATEL || Declare.KTO_VOLAL == Declare.VOLAL_OLYMP)
+                {
+                    prompt += Declare.MENO_EXE;
+                }
+
+                var res = MessageBox.Show(prompt, Declare.TTITLE, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                if (res == DialogResult.No)
+                {
+                    ProgresiaDone();
+                    Declare.ExitProg(0);
+                    return;
+                }
+            }
+
+            ProgresiaDone();
+        }
+
+        /// <summary>
+        /// vrati nekomprimovanu velkost suborov v zip v bytoch
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public long DajVelkostSuborovVZip(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                return 0;
+
+            long sum = 0;
+
+            using (var fs = File.OpenRead(path))
+            using (var zip = new ZipArchive(fs, ZipArchiveMode.Read, leaveOpen: false))
+            {
+                ProgresiaPreset(zip.Entries.Count);
+
+                foreach (var e in zip.Entries)
+                {
+                    try
+                    {
+                        // Rátame iba súbory (nie adresáre)
+                        bool isDirectory = e.Name.Length == 0 || e.FullName.EndsWith("/", StringComparison.Ordinal);
+                        if (!isDirectory)
+                            sum += e.Length; // uncompressed size
+                    }
+                    catch { }
+
+                    ProgresiaTik();
+                }
+            }
+
+            return sum;
         }
 
         /// <summary>
@@ -191,6 +822,7 @@ namespace OlympUpgrade
 
                 ProgresiaTik();
 
+                //TODO Tato cast nikdy nepojde -> Mzdy.lic
                 // 2) Pozri licenciu na inštalačkách (ak je v akt. adresári a nie je to istý adresár ako cieľ)
                 string aktLicPath = Declare.PridajLomitko(Declare.AKT_ADRESAR) + Declare.LICENCIA;
                 if (Declare.ExistujeSubor(aktLicPath) &&
@@ -199,6 +831,7 @@ namespace OlympUpgrade
                     Lic = Declare.PridajLomitko(Declare.AKT_ADRESAR); // budem kopírovať z tohto koreňa
                 }
 
+                //TODO Tato cast nikdy nepojde -> Mzdy.lic
                 // 3) Ak je licencia na inštalačkách, ide sa inštalovať „ostrá“
                 if (!string.IsNullOrEmpty(Lic))
                 {

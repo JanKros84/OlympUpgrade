@@ -539,5 +539,19 @@ namespace OlympUpgrade
             }
             catch { return false; }
         }
+
+        public static long DiskSpaceKB(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return -1;
+
+            string root = Path.GetPathRoot(Path.GetFullPath(path));
+            if (string.IsNullOrEmpty(root))
+                return -1;
+
+            var di = new DriveInfo(root);
+
+            return di.AvailableFreeSpace / 1024;
+        }
     }
 }
