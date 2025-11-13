@@ -26,11 +26,13 @@ namespace OlympUpgrade
 
         private long _AktTik;
 
-        List<string> _Chybne = new List<string>();
-        List<string> _Spravne = new List<string>();
-        List<string> _Preskocene = new List<string>();
+        private List<string> _Chybne = new List<string>();
+        private List<string> _Spravne = new List<string>();
+        private List<string> _Preskocene = new List<string>();
         //Dictionary<string, object> _PomCol = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-        List<string> _PomCol = new List<string>();
+        private List<string> _PomCol = new List<string>();
+
+        private Encoding _zipEncoding = Encoding.GetEncoding(852); //TODO uistit sa 1250/852/850
 
         public OlympUpgrade()
         {
@@ -191,8 +193,8 @@ namespace OlympUpgrade
 
             lblDestFile.Text = "Kopírovanie súborov ...";
             lblDestFile.Refresh();
-
-            using (ZipArchive zip = ZipFile.OpenRead(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP)))
+            
+            using (ZipArchive zip = ZipFile.Open(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP), ZipArchiveMode.Read, _zipEncoding))
             {
                 ProgresiaPreset(zip.Entries.Count);
                 var tempAdr = Declare.DajTemp(Declare.AKT_ADRESAR);
@@ -327,25 +329,26 @@ namespace OlympUpgrade
 
                 // --- GRAFIKA\*.*  ---
                 _PomCol.Clear();
-                ExtractFilesExtensionOnPath(zip, "Grafika", "*");
+                ExtractFilesExtensionOnPath(zip, Declare.DEST_PATH, "Grafika", "*");
                 CheckCopyException(Path.Combine(Declare.DEST_PATH, "Grafika"));
 
                 // --- SKRIPTY\CREATE\*.sql ---
                 _PomCol.Clear();
-                ExtractFilesExtensionOnPath(zip, "Skripty\\create\\", "sql");
+                ExtractFilesExtensionOnPath(zip, Declare.DEST_PATH, "Skripty\\create\\", "sql");
                 CheckCopyException(Path.Combine(Declare.DEST_PATH, "Skripty", "create"));
 
                 // --- SKRIPTY\DROP\*.sql ---
                 _PomCol.Clear();
-                ExtractFilesExtensionOnPath(zip, "Skripty\\drop\\", "sql");
+                ExtractFilesExtensionOnPath(zip, Declare.DEST_PATH, "Skripty\\drop\\", "sql");
                 CheckCopyException(Path.Combine(Declare.DEST_PATH, "Skripty", "drop"));
 
                 // --- ZDROJE\*.* ---
                 _PomCol.Clear();
-                ExtractFilesExtensionOnPath(zip, "Zdroje", "*");
+                ExtractFilesExtensionOnPath(zip, Declare.DEST_PATH, "Zdroje", "*");
                 CheckCopyException(Path.Combine(Declare.DEST_PATH, "Zdroje"));
 
-                /*PripravPomCol();
+                /* ---TEMPLATE---
+                PripravPomCol();
                 zipRes = zip.UnzipMatching(target, "ZDROJE\\*.*", 0);
                 if (zipRes < 1 || PomCol.Count > 0)
                 {
@@ -362,68 +365,61 @@ namespace OlympUpgrade
                     NastavPrava(vzoryPath, "*.*", FileAttributes.Normal);
 
                 _PomCol.Clear();
-                ExtractFilesExtensionOnPath(zip, "Zdroje", "*");
+                ExtractFilesExtensionOnPath(zip, Declare.DEST_PATH, "Zdroje", "*");
                 CheckCopyException(vzoryPath);
                 if (_PomCol.Count > 0)
                     NastavPrava(Path.Combine(vzoryPath, "Vzory\\"), "*.*", FileAttributes.ReadOnly);
-                /*
-                // --- Kopírovanie vybraných súborov (ak existujú v AKT_ADRESAR) ---
-                CopyIfExists(AKT_ADRESAR, target, "OLYMP.CHM", Spravne, Chybne, NastavCestu, Title);
-                CopyIfExists(AKT_ADRESAR, target, "CRV2Kros.exe", Spravne, Chybne, NastavCestu, Title);
-                CopyIfExists(AKT_ADRESAR, target, "ADOWrapper.dll", Spravne, Chybne, NastavCestu, Title);
-                CopyIfExists(AKT_ADRESAR, target, "itextsharp.dll", Spravne, Chybne, NastavCestu, Title);
-                CopyIfExists(AKT_ADRESAR, target, "Kros.BankTransfers.dll", Spravne, Chybne, NastavCestu, Title);
 
-                // --- Vymaz staré súbory ---
+                CopyFileIfExists(Declare.AKT_ADRESAR, Declare.DEST_PATH, "OLYMP.CHM");
+                CopyFileIfExists(Declare.AKT_ADRESAR, Declare.DEST_PATH, "CRV2Kros.exe");
+                CopyFileIfExists(Declare.AKT_ADRESAR, Declare.DEST_PATH, "ADOWrapper.dll");
+                CopyFileIfExists(Declare.AKT_ADRESAR, Declare.DEST_PATH, "itextsharp.dll");
+                CopyFileIfExists(Declare.AKT_ADRESAR, Declare.DEST_PATH, "Kros.BankTransfers.dll");
+
                 VymazStareSubory();
 
                 // --- SK\*.* ---
-                zipRes = zip.UnzipMatching(target, "SK\\*.*", 0);
-                if (zipRes < 1 || PomCol.Count > 0)
-                {
-                    PridajChybu();
-                    MessageBox.Show(
-                        $"Nastala chyba pri kopírovaní súborov do adresára {target}SK\\\r\n\r\n" +
-                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
-                        Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                _PomCol.Clear();
+                ExtractFilesExtensionOnPath(zip, Declare.DEST_PATH, "sk", "*");
+                CheckCopyException(Path.Combine(Declare.DEST_PATH, "sk"));
 
-                // --- jednorazové súbory / exe / txt zo ZIPu ---
-                PripravPomCol();
-                int errCount = 0;
-                errCount += Unzip1(zip, target, "LEGISL.MDB");
-                errCount += Unzip1(zip, target, "OLYMP.chm");
-                errCount += Unzip1(zip, target, "CRV2Kros.exe");
-                errCount += Unzip1(zip, target, SUBOR_EXE);
-                errCount += Unzip1(zip, target, SUBOR_TeamViewer);
-                errCount += Unzip1(zip, target, SUBOR_ClickYes);
-                errCount += Unzip1(zip, target, "Kros FTP Uploader.exe");
-                errCount += Unzip1(zip, target, "Downloader.exe");
-                errCount += Unzip1(zip, target, "Aktivácia.exe");
+                // --- Citajma*.txt, CoJeNove.txt, Dealers.txt a EXE - prepisuju sa ---
+                _PomCol.Clear();
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", "LEGISL.MDB");
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", "OLYMP.chm");
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", "CRV2Kros.exe");
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", Declare.SUBOR_EXE);
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", Declare.SUBOR_TeamViewer);
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", Declare.SUBOR_ClickYes);
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", "Kros FTP Uploader.exe");
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", "Downloader.exe");
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", "Aktivácia.exe");
 
-                // zoznamSuborov.txt
-                errCount += Unzip1(zip, target, "zoznamSuborov.txt");
-                var zoznamPath = Path.Combine(target, "zoznamSuborov.txt");
-                if (FileExists(zoznamPath))
+
+                //automaticke rozbalenie suborov podla zoznamSuborov.txt
+                ExtractFileOnPath(zip, Declare.DEST_PATH, "", "zoznamSuborov.txt");
+                var zoznamPath = Path.Combine(Declare.DEST_PATH, "zoznamSuborov.txt");
+                if (Declare.ExistujeSubor(zoznamPath))
                 {
-                    var content = LoadFile(zoznamPath);
-                    var lines = (content ?? "").Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    var lines = File.ReadAllLines(zoznamPath);
+
                     foreach (var line in lines)
-                        errCount += Unzip1(zip, target, line.Trim());
+                    {
+                        var file = line.Trim();
+                        if (file.Length == 0) continue;
+
+                        var path = Path.GetDirectoryName(file);
+                        file = Path.GetFileName(file);
+
+                        ExtractFileOnPath(zip, Path.Combine(Declare.DEST_PATH, path), path, file);
+                    }
                 }
 
-                if (errCount > 0)
-                {
-                    PridajChybu();
-                    MessageBox.Show(
-                        $"Nastala chyba pri kopírovaní súborov do adresára {target}\r\n\r\n" +
-                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
-                        Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                CheckCopyException(Declare.DEST_PATH);
 
                 // DevExpress.*.dll
-                PripravPomCol();
-                zipRes = zip.UnzipMatching(target, "DevExpress.*.dll", 0);
+                _PomCol.Clear();
+                /*zipRes = zip.UnzipMatching(target, "DevExpress.*.dll", 0);
                 if (zipRes < 1 || PomCol.Count > 0)
                 {
                     PridajChybu();
@@ -497,6 +493,65 @@ namespace OlympUpgrade
             }
         }
 
+        private void VymazStareSubory()
+        {
+            DeleteMatching(Declare.DEST_PATH, "Mzdy.exe");
+
+            DeleteMatching(Declare.DEST_PATH, "DevExpress.*");
+
+            string skDir = Path.Combine(Declare.DEST_PATH, "sk");
+            DeleteMatching(skDir, "DevExpress.*");
+
+            DeleteMatching(Declare.DEST_PATH, "Kros.Licenses*");
+        }
+
+        private static void DeleteMatching(string directory, string searchPattern)
+        {
+            if (!Directory.Exists(directory)) return;
+
+            try
+            {
+                foreach (var file in Directory.EnumerateFiles(directory, searchPattern, SearchOption.TopDirectoryOnly))
+                {
+                    try { File.SetAttributes(file, FileAttributes.Normal); } catch { }
+                    try { File.Delete(file); } catch { }
+                }
+            }
+            catch { }
+        }
+
+        private void CopyFileIfExists(string sourcePath, string destPath, string file)
+        {
+            var sourceFilePath = Path.Combine(sourcePath, file);
+            var destFilePath = Path.Combine(destPath, file);
+
+            //Ak sorceFile existuje a nejedna o ten isty subor
+            if (File.Exists(sourceFilePath)
+                && !string.Equals(sourcePath, destPath, StringComparison.OrdinalIgnoreCase))
+            {
+                lblDestFile.Text = destFilePath.ToUpperInvariant();
+                lblDestFile.Refresh();
+
+                try
+                {
+                    Directory.CreateDirectory(destPath);
+
+                    File.Copy(sourceFilePath, destFilePath, overwrite: true);
+
+                    _Spravne.Add(file);
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show(
+                        $"Nastala chyba pri kopírovaní súborov do adresára {destFilePath}\r\n\r\n" +
+                        "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
+                        Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    _Chybne.Add("súbor sa nedá prepísať" + "\t" + file);
+                }
+            }
+        }
+
         private void CheckCopyException(string path)
         {
             if (_PomCol.Count > 0)
@@ -506,6 +561,8 @@ namespace OlympUpgrade
                     $"Nastala chyba pri kopírovaní súborov do adresára {path}\r\n\r\n" +
                     "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
                     Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                _PomCol.Clear();
             }
         }
 
@@ -514,19 +571,12 @@ namespace OlympUpgrade
             //cesta v tvare: "REPORTY\"
             //pripona v tvare: "rpt"
             _PomCol.Clear();
-            string destPath = ExtractFilesExtensionOnPath(zip, Cesta, pripona);
+            string destPath = ExtractFilesExtensionOnPath(zip, Declare.DEST_PATH, Cesta, pripona);
 
 
             // 2) Rozbaliť konkrétny súbor/subset (Cesta + subor)
             //_PomCol.Clear();
-            var fileName = Path.Combine(Cesta, subor).Replace('\\', '/');
-            var entryFile = zip.Entries
-                           .FirstOrDefault(e => string.Equals(e.FullName, fileName, StringComparison.OrdinalIgnoreCase)
-                                            && e.Length > 0);
-            if (entryFile != null)
-                ExtractToFile(destPath, entryFile);
-            else
-                _PomCol.Add($"Nenasiel sa: '{destPath}'");
+            ExtractFileOnPath(zip, destPath, Cesta, subor);
 
             if (_PomCol.Count > 0)
             {
@@ -542,18 +592,30 @@ namespace OlympUpgrade
             NastavDlheNazvy(Cesta, "." + pripona, 50, subor);
         }
 
-        private string ExtractFilesExtensionOnPath(ZipArchive zip, string path, string extension)
+        private void ExtractFileOnPath(ZipArchive zip, string destPath, string filePath, string subor)
+        {
+            var fileName = Path.Combine(filePath, subor).Replace('\\', '/');
+            var entryFile = zip.Entries
+                           .FirstOrDefault(e => string.Equals(e.FullName, fileName, StringComparison.OrdinalIgnoreCase)
+                                            && e.Length > 0);
+            if (entryFile != null)
+                ExtractToFile(destPath, entryFile);
+            else
+                _PomCol.Add($"Nenasiel sa: '{fileName}'");
+        }
+
+        private string ExtractFilesExtensionOnPath(ZipArchive zip, string destFolder, string searchPath, string extension)
         {
             extension = (extension ?? "").ToLowerInvariant();
-            path = path.Last() == '\\' ? path.Substring(0, path.Length - 1) : path;
-            path = path.Last() == '/' ? path.Substring(0, path.Length - 1) : path;
-            path = path.Replace('\\', '/');
-            var destPath = Path.Combine(Declare.DEST_PATH, path);
+            searchPath = searchPath.Last() == '\\' ? searchPath.Substring(0, searchPath.Length - 1) : searchPath;
+            searchPath = searchPath.Last() == '/' ? searchPath.Substring(0, searchPath.Length - 1) : searchPath;
+            searchPath = searchPath.Replace('\\', '/');
+            var destPath = Path.Combine(destFolder, searchPath);
             Directory.CreateDirectory(destPath);
 
             // 1) Rozbaliť všetky *.pripona v podsložke Cesta
             //int zipRes = UnzipMatching(Declare.DEST_PATH, mask1, PomCol);
-            string regexMask = $@"(?i)^{Regex.Escape(path)}[\\/][^\\/]+\.{extension}$";
+            string regexMask = $@"(?i)^{Regex.Escape(searchPath)}[\\/][^\\/]+\.{extension}$";
 
             var dataEntrie = zip.Entries.Where(e => Regex.IsMatch(e.FullName, regexMask) && e.Length > 0);
             if (dataEntrie.Count() > 0)
@@ -575,6 +637,8 @@ namespace OlympUpgrade
                 entry.ExtractToFile(Path.Combine(destPath, entry.Name), overwrite: true);
                 lblDestFile.Text = $"{entry.FullName}";
                 lblDestFile.Refresh();
+
+                _Spravne.Add(entry.FullName);
             }
             catch (Exception ex)
             {
@@ -776,8 +840,7 @@ namespace OlympUpgrade
 
             long sum = 0;
 
-            using (var fs = File.OpenRead(path))
-            using (var zip = new ZipArchive(fs, ZipArchiveMode.Read, leaveOpen: false))
+            using (ZipArchive zip = ZipFile.Open(path, ZipArchiveMode.Read, _zipEncoding))
             {
                 ProgresiaPreset(zip.Entries.Count);
 
@@ -1660,7 +1723,7 @@ namespace OlympUpgrade
             string resFilePath = Path.Combine(desAdr, fileName);
             try
             {
-                using (ZipArchive zip = ZipFile.OpenRead(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP)))
+                using (ZipArchive zip = ZipFile.Open(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP), ZipArchiveMode.Read, _zipEncoding))
                 {
                     var entry = zip.Entries//zip.GetEntry(fileName);
                            .FirstOrDefault(e => string.Equals(e.FullName, fileName,
