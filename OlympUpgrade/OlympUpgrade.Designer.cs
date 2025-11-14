@@ -43,9 +43,17 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.panel2 = new System.Windows.Forms.Panel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.panel6 = new System.Windows.Forms.Panel();
+            this.pb = new System.Windows.Forms.ProgressBar();
+            this.lblDestFile = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.label15 = new System.Windows.Forms.Label();
+            this.panel7 = new System.Windows.Forms.Panel();
+            this.label14 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.panel4 = new System.Windows.Forms.Panel();
             this.linkLabel1 = new System.Windows.Forms.LinkLabel();
@@ -57,6 +65,7 @@
             this.label10 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
+            this.panel5 = new System.Windows.Forms.Panel();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnSpat = new System.Windows.Forms.Button();
             this.btnDalej = new System.Windows.Forms.Button();
@@ -64,26 +73,24 @@
             this.btnStorno = new System.Windows.Forms.Button();
             this.lblCopyright = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.panel7 = new System.Windows.Forms.Panel();
-            this.label14 = new System.Windows.Forms.Label();
-            this.label9 = new System.Windows.Forms.Label();
-            this.panel5 = new System.Windows.Forms.Panel();
-            this.label16 = new System.Windows.Forms.Label();
-            this.lblDestFile = new System.Windows.Forms.Label();
-            this.pb = new System.Windows.Forms.ProgressBar();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.panel8 = new System.Windows.Forms.Panel();
+            this.panel9 = new System.Windows.Forms.Panel();
+            this.label17 = new System.Windows.Forms.Label();
+            this.lst = new System.Windows.Forms.ListBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.panel3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.panel6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.panel7.SuspendLayout();
             this.tabPage3.SuspendLayout();
             this.panel4.SuspendLayout();
             this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            this.panel7.SuspendLayout();
+            this.tabPage4.SuspendLayout();
+            this.panel9.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -92,6 +99,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.ItemSize = new System.Drawing.Size(50, 15);
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
@@ -232,6 +240,16 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "Víta Vás inštalácia programu OLYMP";
             // 
+            // panel2
+            // 
+            this.panel2.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
+            this.panel2.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panel2.Location = new System.Drawing.Point(0, 0);
+            this.panel2.Margin = new System.Windows.Forms.Padding(0);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(196, 352);
+            this.panel2.TabIndex = 2;
+            // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.panel6);
@@ -257,6 +275,41 @@
             this.panel6.Size = new System.Drawing.Size(600, 352);
             this.panel6.TabIndex = 0;
             // 
+            // pb
+            // 
+            this.pb.Location = new System.Drawing.Point(107, 192);
+            this.pb.Name = "pb";
+            this.pb.Size = new System.Drawing.Size(386, 23);
+            this.pb.TabIndex = 8;
+            // 
+            // lblDestFile
+            // 
+            this.lblDestFile.AutoEllipsis = true;
+            this.lblDestFile.Location = new System.Drawing.Point(104, 166);
+            this.lblDestFile.Name = "lblDestFile";
+            this.lblDestFile.Size = new System.Drawing.Size(389, 13);
+            this.lblDestFile.TabIndex = 7;
+            this.lblDestFile.Text = "*";
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(104, 144);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(32, 13);
+            this.label16.TabIndex = 6;
+            this.label16.Text = "Stav:";
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pictureBox1.BackgroundImage")));
+            this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.pictureBox1.Location = new System.Drawing.Point(34, 86);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(49, 55);
+            this.pictureBox1.TabIndex = 5;
+            this.pictureBox1.TabStop = false;
+            // 
             // label15
             // 
             this.label15.Location = new System.Drawing.Point(104, 87);
@@ -265,6 +318,38 @@
             this.label15.TabIndex = 4;
             this.label15.Text = "Počajte, kým inštalátor nainštaluje komponenty programu OLYMP. Môže to trvať nie" +
     "koľko minút.";
+            // 
+            // panel7
+            // 
+            this.panel7.BackColor = System.Drawing.Color.White;
+            this.panel7.BackgroundImage = global::OlympUpgrade.Properties.Resources.InstalaciaKomponetov;
+            this.panel7.Controls.Add(this.label14);
+            this.panel7.Controls.Add(this.label9);
+            this.panel7.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel7.Location = new System.Drawing.Point(0, 0);
+            this.panel7.Name = "panel7";
+            this.panel7.Size = new System.Drawing.Size(600, 58);
+            this.panel7.TabIndex = 3;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(8, 35);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(254, 13);
+            this.label14.TabIndex = 3;
+            this.label14.Text = "Prebieha inštalácia komponentov programu OLYMP.";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.BackColor = System.Drawing.Color.Transparent;
+            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.label9.Location = new System.Drawing.Point(8, 10);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(296, 16);
+            this.label9.TabIndex = 2;
+            this.label9.Text = "Inštalácia komponentov programu OLYMP";
             // 
             // tabPage3
             // 
@@ -384,6 +469,16 @@
             this.label13.TabIndex = 1;
             this.label13.Text = "Inštalácia programu OLYMP je dokončená";
             // 
+            // panel5
+            // 
+            this.panel5.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
+            this.panel5.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panel5.Location = new System.Drawing.Point(0, 0);
+            this.panel5.Margin = new System.Windows.Forms.Padding(0);
+            this.panel5.Name = "panel5";
+            this.panel5.Size = new System.Drawing.Size(196, 352);
+            this.panel5.TabIndex = 4;
+            // 
             // panel1
             // 
             this.panel1.Controls.Add(this.btnSpat);
@@ -446,92 +541,55 @@
             this.lblCopyright.TabIndex = 0;
             this.lblCopyright.Text = "lblCopyright";
             // 
-            // panel2
+            // tabPage4
             // 
-            this.panel2.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
-            this.panel2.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel2.Location = new System.Drawing.Point(0, 0);
-            this.panel2.Margin = new System.Windows.Forms.Padding(0);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(196, 352);
-            this.panel2.TabIndex = 2;
+            this.tabPage4.Controls.Add(this.panel9);
+            this.tabPage4.Controls.Add(this.panel8);
+            this.tabPage4.Location = new System.Drawing.Point(4, 19);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(600, 352);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "tabPage4";
+            this.tabPage4.UseVisualStyleBackColor = true;
             // 
-            // pictureBox1
+            // panel8
             // 
-            this.pictureBox1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pictureBox1.BackgroundImage")));
-            this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.pictureBox1.Location = new System.Drawing.Point(34, 86);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(49, 55);
-            this.pictureBox1.TabIndex = 5;
-            this.pictureBox1.TabStop = false;
+            this.panel8.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
+            this.panel8.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panel8.Location = new System.Drawing.Point(3, 3);
+            this.panel8.Margin = new System.Windows.Forms.Padding(0);
+            this.panel8.Name = "panel8";
+            this.panel8.Size = new System.Drawing.Size(196, 346);
+            this.panel8.TabIndex = 5;
             // 
-            // panel7
+            // panel9
             // 
-            this.panel7.BackColor = System.Drawing.Color.White;
-            this.panel7.BackgroundImage = global::OlympUpgrade.Properties.Resources.InstalaciaKomponetov;
-            this.panel7.Controls.Add(this.label14);
-            this.panel7.Controls.Add(this.label9);
-            this.panel7.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel7.Location = new System.Drawing.Point(0, 0);
-            this.panel7.Name = "panel7";
-            this.panel7.Size = new System.Drawing.Size(600, 58);
-            this.panel7.TabIndex = 3;
+            this.panel9.Controls.Add(this.lst);
+            this.panel9.Controls.Add(this.label17);
+            this.panel9.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel9.Location = new System.Drawing.Point(199, 3);
+            this.panel9.Name = "panel9";
+            this.panel9.Size = new System.Drawing.Size(398, 346);
+            this.panel9.TabIndex = 6;
             // 
-            // label14
+            // label17
             // 
-            this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(8, 35);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(254, 13);
-            this.label14.TabIndex = 3;
-            this.label14.Text = "Prebieha inštalácia komponentov programu OLYMP.";
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.label17.Location = new System.Drawing.Point(13, 13);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(143, 16);
+            this.label17.TabIndex = 2;
+            this.label17.Text = "Výsledok inštalácie";
             // 
-            // label9
+            // lst
             // 
-            this.label9.AutoSize = true;
-            this.label9.BackColor = System.Drawing.Color.Transparent;
-            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label9.Location = new System.Drawing.Point(8, 10);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(296, 16);
-            this.label9.TabIndex = 2;
-            this.label9.Text = "Inštalácia komponentov programu OLYMP";
-            // 
-            // panel5
-            // 
-            this.panel5.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
-            this.panel5.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel5.Location = new System.Drawing.Point(0, 0);
-            this.panel5.Margin = new System.Windows.Forms.Padding(0);
-            this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(196, 352);
-            this.panel5.TabIndex = 4;
-            // 
-            // label16
-            // 
-            this.label16.AutoSize = true;
-            this.label16.Location = new System.Drawing.Point(104, 144);
-            this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(32, 13);
-            this.label16.TabIndex = 6;
-            this.label16.Text = "Stav:";
-            // 
-            // lblDestFile
-            // 
-            this.lblDestFile.AutoEllipsis = true;
-            this.lblDestFile.Location = new System.Drawing.Point(104, 166);
-            this.lblDestFile.Name = "lblDestFile";
-            this.lblDestFile.Size = new System.Drawing.Size(389, 13);
-            this.lblDestFile.TabIndex = 7;
-            this.lblDestFile.Text = "*";
-            // 
-            // pb
-            // 
-            this.pb.Location = new System.Drawing.Point(107, 192);
-            this.pb.Name = "pb";
-            this.pb.Size = new System.Drawing.Size(386, 23);
-            this.pb.TabIndex = 8;
+            this.lst.FormattingEnabled = true;
+            this.lst.Location = new System.Drawing.Point(16, 33);
+            this.lst.Name = "lst";
+            this.lst.Size = new System.Drawing.Size(363, 290);
+            this.lst.TabIndex = 3;
             // 
             // OlympUpgrade
             // 
@@ -555,14 +613,17 @@
             this.tabPage2.ResumeLayout(false);
             this.panel6.ResumeLayout(false);
             this.panel6.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.panel7.ResumeLayout(false);
+            this.panel7.PerformLayout();
             this.tabPage3.ResumeLayout(false);
             this.panel4.ResumeLayout(false);
             this.panel4.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.panel7.ResumeLayout(false);
-            this.panel7.PerformLayout();
+            this.tabPage4.ResumeLayout(false);
+            this.panel9.ResumeLayout(false);
+            this.panel9.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -611,6 +672,11 @@
         private System.Windows.Forms.Label lblDestFile;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.ProgressBar pb;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.Panel panel9;
+        private System.Windows.Forms.Panel panel8;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.ListBox lst;
     }
 }
 

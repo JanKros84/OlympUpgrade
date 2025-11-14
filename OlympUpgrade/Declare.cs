@@ -1,14 +1,8 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace OlympUpgrade
@@ -235,6 +229,63 @@ namespace OlympUpgrade
             }
             catch { return false; }
         }
+
+        public static bool Vytvor_kluc(RegistryKey skupina_kluca, string meno_kluca)
+        {
+            //try
+            {
+                using (RegistryKey hKey = skupina_kluca.CreateSubKey(meno_kluca, RegistryKeyPermissionCheck.ReadWriteSubTree))
+                {
+                    return hKey == null ? false : true;
+                }
+            }
+            //catch { return; } TODO ???
+        }
+
+        public static void ZapisHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky, string hodnota_polozky)//object hodnota_polozky, int typ_polozky)
+        {
+            //try
+            {
+                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, true))
+                {
+                    if (hKey == null)
+                        return;// ERROR_FILE_NOT_FOUND;
+
+                    hKey.SetValue(meno_polozky, hodnota_polozky, RegistryValueKind.String);
+                }
+            }
+            //catch { return; } TODO ???
+        }
+
+
+        //public static RegistryValueKind? MapKind(int typ)
+        //{
+        //    switch (typ)
+        //    {
+        //        case 0: return RegistryValueKind.None;
+        //        case 1: return RegistryValueKind.String;
+        //        case 2: return RegistryValueKind.ExpandString;
+        //        case 3: return RegistryValueKind.Binary;
+        //        case 4: return RegistryValueKind.DWord;
+        //        case 7: return RegistryValueKind.MultiString;
+        //        case 11: return RegistryValueKind.QWord;
+        //        case 5: return null; // REG_DWORD_BE not supported by.NET API
+        //        default: return null;
+        //    }
+        //}
+
+
+        public static bool ExistujeKlucReg(RegistryKey skupina_kluca, string meno_kluca)
+        {
+            try
+            {
+                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, RegistryRights.QueryValues))
+                    return hKey != null;
+            }
+            catch { return false; }
+        }
+
+
 
         public static bool MamDostatocnyFramework()
         {
