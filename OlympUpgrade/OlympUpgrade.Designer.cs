@@ -56,7 +56,8 @@
             this.label9 = new System.Windows.Forms.Label();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.panel4 = new System.Windows.Forms.Panel();
-            this.linkLabel1 = new System.Windows.Forms.LinkLabel();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
+            this.linkLabelKros = new System.Windows.Forms.LinkLabel();
             this.label8 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
@@ -66,6 +67,11 @@
             this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.panel5 = new System.Windows.Forms.Panel();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.panel9 = new System.Windows.Forms.Panel();
+            this.lst = new System.Windows.Forms.ListBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.panel8 = new System.Windows.Forms.Panel();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnSpat = new System.Windows.Forms.Button();
             this.btnDalej = new System.Windows.Forms.Button();
@@ -73,11 +79,6 @@
             this.btnStorno = new System.Windows.Forms.Button();
             this.lblCopyright = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.panel8 = new System.Windows.Forms.Panel();
-            this.panel9 = new System.Windows.Forms.Panel();
-            this.label17 = new System.Windows.Forms.Label();
-            this.lst = new System.Windows.Forms.ListBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -88,9 +89,10 @@
             this.panel7.SuspendLayout();
             this.tabPage3.SuspendLayout();
             this.panel4.SuspendLayout();
-            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.tabPage4.SuspendLayout();
             this.panel9.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -195,7 +197,7 @@
             // 
             // label5
             // 
-            this.label5.ForeColor = System.Drawing.SystemColors.MenuHighlight;
+            this.label5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
             this.label5.Location = new System.Drawing.Point(11, 240);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(383, 34);
@@ -365,8 +367,9 @@
             // 
             // panel4
             // 
-            this.panel4.BackColor = System.Drawing.Color.Salmon;
-            this.panel4.Controls.Add(this.linkLabel1);
+            this.panel4.BackColor = System.Drawing.Color.White;
+            this.panel4.Controls.Add(this.pictureBox2);
+            this.panel4.Controls.Add(this.linkLabelKros);
             this.panel4.Controls.Add(this.label8);
             this.panel4.Controls.Add(this.label11);
             this.panel4.Controls.Add(this.label7);
@@ -382,15 +385,26 @@
             this.panel4.Size = new System.Drawing.Size(404, 352);
             this.panel4.TabIndex = 5;
             // 
-            // linkLabel1
+            // pictureBox2
             // 
-            this.linkLabel1.AutoSize = true;
-            this.linkLabel1.Location = new System.Drawing.Point(176, 180);
-            this.linkLabel1.Name = "linkLabel1";
-            this.linkLabel1.Size = new System.Drawing.Size(68, 13);
-            this.linkLabel1.TabIndex = 11;
-            this.linkLabel1.TabStop = true;
-            this.linkLabel1.Text = "www.kros.sk";
+            this.pictureBox2.Image = global::OlympUpgrade.Properties.Resources.logo;
+            this.pictureBox2.Location = new System.Drawing.Point(209, 119);
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.Size = new System.Drawing.Size(99, 115);
+            this.pictureBox2.TabIndex = 12;
+            this.pictureBox2.TabStop = false;
+            // 
+            // linkLabelKros
+            // 
+            this.linkLabelKros.AutoSize = true;
+            this.linkLabelKros.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
+            this.linkLabelKros.Location = new System.Drawing.Point(11, 179);
+            this.linkLabelKros.Name = "linkLabelKros";
+            this.linkLabelKros.Size = new System.Drawing.Size(68, 13);
+            this.linkLabelKros.TabIndex = 11;
+            this.linkLabelKros.TabStop = true;
+            this.linkLabelKros.Text = "www.kros.sk";
+            this.linkLabelKros.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabelKros_LinkClicked);
             // 
             // label8
             // 
@@ -412,16 +426,16 @@
             // 
             // label7
             // 
-            this.label7.Location = new System.Drawing.Point(11, 180);
+            this.label7.Location = new System.Drawing.Point(11, 193);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(140, 33);
+            this.label7.Size = new System.Drawing.Size(140, 15);
             this.label7.TabIndex = 8;
-            this.label7.Text = "www.kros.sk\r\nolymp@kros.sk";
+            this.label7.Text = "olymp@kros.sk";
             // 
             // label6
             // 
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label6.ForeColor = System.Drawing.SystemColors.MenuHighlight;
+            this.label6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
             this.label6.Location = new System.Drawing.Point(11, 106);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(140, 48);
@@ -430,7 +444,7 @@
             // 
             // lblInfo
             // 
-            this.lblInfo.ForeColor = System.Drawing.SystemColors.MenuHighlight;
+            this.lblInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
             this.lblInfo.Location = new System.Drawing.Point(11, 287);
             this.lblInfo.Name = "lblInfo";
             this.lblInfo.Size = new System.Drawing.Size(383, 49);
@@ -479,6 +493,56 @@
             this.panel5.Size = new System.Drawing.Size(196, 352);
             this.panel5.TabIndex = 4;
             // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.panel9);
+            this.tabPage4.Controls.Add(this.panel8);
+            this.tabPage4.Location = new System.Drawing.Point(4, 19);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(600, 352);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "tabPage4";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // panel9
+            // 
+            this.panel9.Controls.Add(this.lst);
+            this.panel9.Controls.Add(this.label17);
+            this.panel9.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel9.Location = new System.Drawing.Point(199, 3);
+            this.panel9.Name = "panel9";
+            this.panel9.Size = new System.Drawing.Size(398, 346);
+            this.panel9.TabIndex = 6;
+            // 
+            // lst
+            // 
+            this.lst.FormattingEnabled = true;
+            this.lst.Location = new System.Drawing.Point(16, 33);
+            this.lst.Name = "lst";
+            this.lst.Size = new System.Drawing.Size(363, 290);
+            this.lst.TabIndex = 3;
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.label17.Location = new System.Drawing.Point(13, 13);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(143, 16);
+            this.label17.TabIndex = 2;
+            this.label17.Text = "Výsledok inštalácie";
+            // 
+            // panel8
+            // 
+            this.panel8.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
+            this.panel8.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panel8.Location = new System.Drawing.Point(3, 3);
+            this.panel8.Margin = new System.Windows.Forms.Padding(0);
+            this.panel8.Name = "panel8";
+            this.panel8.Size = new System.Drawing.Size(196, 346);
+            this.panel8.TabIndex = 5;
+            // 
             // panel1
             // 
             this.panel1.Controls.Add(this.btnSpat);
@@ -512,6 +576,7 @@
             this.btnDalej.Text = "Ď&alej >";
             this.btnDalej.UseVisualStyleBackColor = true;
             this.btnDalej.Visible = false;
+            this.btnDalej.Click += new System.EventHandler(this.btnDalej_Click);
             // 
             // btnOk
             // 
@@ -521,6 +586,7 @@
             this.btnOk.TabIndex = 2;
             this.btnOk.Text = "&Inštaluj";
             this.btnOk.UseVisualStyleBackColor = true;
+            this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
             // 
             // btnStorno
             // 
@@ -541,56 +607,6 @@
             this.lblCopyright.TabIndex = 0;
             this.lblCopyright.Text = "lblCopyright";
             // 
-            // tabPage4
-            // 
-            this.tabPage4.Controls.Add(this.panel9);
-            this.tabPage4.Controls.Add(this.panel8);
-            this.tabPage4.Location = new System.Drawing.Point(4, 19);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(600, 352);
-            this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "tabPage4";
-            this.tabPage4.UseVisualStyleBackColor = true;
-            // 
-            // panel8
-            // 
-            this.panel8.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
-            this.panel8.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel8.Location = new System.Drawing.Point(3, 3);
-            this.panel8.Margin = new System.Windows.Forms.Padding(0);
-            this.panel8.Name = "panel8";
-            this.panel8.Size = new System.Drawing.Size(196, 346);
-            this.panel8.TabIndex = 5;
-            // 
-            // panel9
-            // 
-            this.panel9.Controls.Add(this.lst);
-            this.panel9.Controls.Add(this.label17);
-            this.panel9.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel9.Location = new System.Drawing.Point(199, 3);
-            this.panel9.Name = "panel9";
-            this.panel9.Size = new System.Drawing.Size(398, 346);
-            this.panel9.TabIndex = 6;
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label17.Location = new System.Drawing.Point(13, 13);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(143, 16);
-            this.label17.TabIndex = 2;
-            this.label17.Text = "Výsledok inštalácie";
-            // 
-            // lst
-            // 
-            this.lst.FormattingEnabled = true;
-            this.lst.Location = new System.Drawing.Point(16, 33);
-            this.lst.Name = "lst";
-            this.lst.Size = new System.Drawing.Size(363, 290);
-            this.lst.TabIndex = 3;
-            // 
             // OlympUpgrade
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -600,9 +616,10 @@
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "OlympUpgrade";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Form1";
+            this.Text = "Olymp";
             this.Activated += new System.EventHandler(this.OlympUpgrade_Activated);
             this.Load += new System.EventHandler(this.OlympUpgrade_Load);
             this.tabControl1.ResumeLayout(false);
@@ -619,11 +636,12 @@
             this.tabPage3.ResumeLayout(false);
             this.panel4.ResumeLayout(false);
             this.panel4.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.tabPage4.ResumeLayout(false);
             this.panel9.ResumeLayout(false);
             this.panel9.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -661,7 +679,7 @@
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.LinkLabel linkLabel1;
+        private System.Windows.Forms.LinkLabel linkLabelKros;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.Panel panel6;
         private System.Windows.Forms.Panel panel7;
@@ -677,6 +695,7 @@
         private System.Windows.Forms.Panel panel8;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.ListBox lst;
+        private System.Windows.Forms.PictureBox pictureBox2;
     }
 }
 

@@ -83,9 +83,9 @@ namespace OlympUpgrade.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap PC {
+        internal static System.Drawing.Bitmap logo {
             get {
-                object obj = ResourceManager.GetObject("PC", resourceCulture);
+                object obj = ResourceManager.GetObject("logo", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -93,9 +93,9 @@ namespace OlympUpgrade.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap PC1 {
+        internal static System.Drawing.Bitmap PC {
             get {
-                object obj = ResourceManager.GetObject("PC1", resourceCulture);
+                object obj = ResourceManager.GetObject("PC", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

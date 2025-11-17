@@ -17,6 +17,8 @@ namespace OlympUpgrade
 {
     public partial class OlympUpgrade : Form
     {
+        private const string URL_KROS = "https://www.kros.sk/";
+
         /// <summary>
         /// v akom kroku instalacie je formular - sluzi na to co maju tlacidla robit
         /// </summary>
@@ -41,48 +43,93 @@ namespace OlympUpgrade
 
         public OlympUpgrade()
         {
+            Application.DoEvents();
             InitializeComponent();
+            Application.DoEvents();
         }
 
-        private void btnChangeDir_Click(object sender, EventArgs e)
+        #region Event handlers
+
+        private void OlympUpgrade_Load(object sender, EventArgs e)
         {
             try
             {
-                this.Tag = Declare.DEST_PATH;
+                int i;
+                List<string> poleArg;
+                string pom = string.Empty;
 
-                // Path.Show vbModal  -> FolderBrowserDialog
-                using (var dlg = new FolderBrowserDialog())
+                HideTabs();
+                Application.DoEvents();
+
+                tabControl1.SelectTab(0);
+                _Stav = 0;
+
+                Declare.AKT_ADRESAR = AppDomain.CurrentDomain.BaseDirectory;
+
+                Declare.RESTARTUJ = false;
+                Declare.KOPIRUJ_LICENCIU = 0;
+
+                NastavRok();
+                Application.DoEvents();
+
+                // zistime argument, s ktorym bol program spustany
+
+                poleArg = Environment.GetCommandLineArgs().ToList();
+                poleArg.RemoveAt(0);
+                //return;
+                // prvy je parameter, potom je restartuj (true, false) a potom nasleduje instalacny adresar
+                if (poleArg.Count - 1 >= 3)
                 {
-                    dlg.Description = "Vyberte cieľový priečinok pre inštaláciu OLYMP";
-                    dlg.ShowNewFolderButton = true;
-                    if (!string.IsNullOrWhiteSpace(Declare.DEST_PATH) && Directory.Exists(Declare.DEST_PATH))
-                        dlg.SelectedPath = Declare.DEST_PATH;
+                    Declare.COMMAND_LINE_ARGUMENT = poleArg[0];
 
-                    if (dlg.ShowDialog(this) == DialogResult.OK)
-                    {
-                        // NastavCestu lblDest, Me.Tag, True  -> nastav label podľa vybraného priečinka
-                        NastavCestu(lblDest, dlg.SelectedPath, true);
-                    }
-                    else
-                    {
-                        // ak zrušené, vráť sa na pôvodnú cestu z this.Tag
-                        NastavCestu(lblDest, (this.Tag as string) ?? string.Empty, true);
-                    }
+                    if (poleArg[1].ToUpper() == "TRUE")
+                        Declare.RESTARTUJ = true;
+
+
+                    int.TryParse(poleArg[2], out Declare.KOPIRUJ_LICENCIU);
+
+                    pom = string.Empty;
+                    for (i = 3; i < poleArg.Count; i++)
+                        pom = pom = pom + poleArg[i] + " ";
+
+                    pom = pom.TrimEnd();
                 }
 
-                Declare.DEST_PATH = lblDest.Text;
-
-                if (!string.Equals(Declare.DEST_PATH, Declare.DEST_PATH_NEZNAMY, StringComparison.OrdinalIgnoreCase) && Declare.MAJOR == 0)
+                // MsgBox "zacinam " & COMMAND_LINE_ARGUMENT
+                // sustil installshield
+                if (!string.IsNullOrEmpty(Declare.COMMAND_LINE_ARGUMENT)
+                    && Declare.COMMAND_LINE_ARGUMENT.ToUpper() == Declare.PARAMETER_INSTAL.ToUpper())
                 {
+                    Declare.TTITLE = "Sprievodca inštaláciou OLYMP";
+                    Declare.KTO_VOLAL = Declare.VOLAL_INSTALL;
+                    OdstranZRegistrovDoinstalovanie();
+                    Declare.DEST_PATH = Declare.PridajLomitko(pom);
+
+                    tabControl1.SelectTab(1);
+                    Application.DoEvents();
                     lblUpgrade.Text = DajVerziuUpgrade();
-                    lblExe.Text = DajVerziuProgramu();
-                    btnOk.Enabled = true;
-                    this.Text = $"OLYMP {lblUpgrade.Text} - Sprievodca inštaláciou";
+                }
+                else if (!string.IsNullOrEmpty(Declare.COMMAND_LINE_ARGUMENT)
+                    && (Declare.COMMAND_LINE_ARGUMENT.ToUpper() == Declare.SUBOR_STARA_INSTALACIA_EXE.ToUpper()
+                        || Declare.COMMAND_LINE_ARGUMENT.ToUpper() == Declare.SUBOR_EXE_STARY.ToUpper()))
+                {
+                    // spustil uzivatel
+                    Declare.TTITLE = "OlympUpgrade";
+                    Declare.KTO_VOLAL = Declare.VOLAL_OLYMP;
+                    btnChangeDir.Enabled = false;      // ak to spustal OLYMP, tak nema co menit adresar
+                    Application.DoEvents();
+                    NastavCestuVerzie(Declare.PridajLomitko(pom));
                 }
                 else
                 {
-                    lblExe.Text = DajVerziuProgramu();
+                    // spustil uzivatel
+                    Declare.TTITLE = "OlympUpgrade";
+                    Declare.KTO_VOLAL = Declare.VOLAL_UZIVATEL;
+                    Application.DoEvents();
+                    NastavCestuVerzie();
                 }
+
+                this.Text = "OLYMP " + lblUpgrade.Text + " - Sprievodca inštaláciou";
             }
             catch (Exception ex)
             {
@@ -106,11 +153,11 @@ namespace OlympUpgrade
                     this.TopMost = false;
 
 
-                    btnOk.Visible = false;
-                    btnStorno.Enabled = false;
-
                     while (_resVysledok_Activated == DialogResult.Yes)
                     {
+                        btnOk.Visible = false;
+                        btnStorno.Enabled = false;
+
                         if (JeSpustenyProgram(Declare.DEST_PATH, Declare.SUBOR_EXE))
                         {
                             _resVysledok_Activated = MessageBox.Show(
@@ -162,6 +209,335 @@ namespace OlympUpgrade
             }
         }
 
+        private void btnDalej_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ZobrazVysledok();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnOk_Click(object sender, EventArgs e)
+        {
+            int P_CRV2_MAJOR, P_CRV2_MINOR, P_CRV2_REVISION;
+            bool splna = true;
+
+            try
+            {
+                //spusti olymp
+                if (_Stav == 2)
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_EXE),
+                        WorkingDirectory = Declare.DEST_PATH,
+                        UseShellExecute = true,
+                        Verb = "open"
+                    };
+                    Process.Start(psi);
+                    this.Close();
+                    return;
+                }
+
+                // ulozi vysledok instalacie
+                if (_Stav == 1)
+                {
+                    UlozitVysledok();
+                    btnStorno?.Focus();
+                    return;
+                }
+
+
+
+                // zisti verziu win a daj varovanie ak je to XP alebo Server 2003                
+                Version v = Environment.OSVersion.Version;
+                if (v.Major == 5 && (v.Minor == 1 || v.Minor == 2))
+                {
+                    MessageBox.Show(
+                        "Pre inštaláciu je požadovaný operačný systém Windows Vista alebo novší!" +
+                        Environment.NewLine + Environment.NewLine +
+                        "Tip:" + Environment.NewLine +
+                        "Informácie o odporúčanej konfigurácii PC nájdete na " + Environment.NewLine +
+                        "https://www.kros.sk/podpora/mzdy-a-personalistika/odporucana-konfiguracia/",
+                        "Setup",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                // zisti ci je adresar vhodny na instalovanie
+                if (!Declare.JeAdresarSpravny(Declare.DEST_PATH))
+                {
+                    MessageBox.Show(
+                        "Zadaný adresár " + Declare.DEST_PATH + " neexistuje, alebo nemáte právo do neho zapisovať.",
+                        "Setup",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                // toto znamena, ze v zadanom adresari nie je alfa32.exe -> Olymp.exe??? (SUBOR_EXE)
+                if (Declare.P_MAJOR == 0)
+                {
+                    var res = MessageBox.Show(
+                        "V zadanom adresári " + Declare.DEST_PATH + " sa nenachádza súbor " + Declare.SUBOR_EXE + "." +
+                        Environment.NewLine + Environment.NewLine +
+                        "Chcete aj napriek tomu inštalovať komponenty programu OLYMP do zadaného adresára?",
+                        Declare.TTITLE,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question,
+                        MessageBoxDefaultButton.Button2);
+
+                    if (res == DialogResult.No) splna = false;
+                }
+                else
+                {
+                    // nie je splnena poziadavka minimalnej verzie
+                    if (Declare.JePrvaVerziaStarsia(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION, Declare.MIN_MAJOR, Declare.MIN_MINOR, Declare.MIN_REVISION) == -1)
+                    {
+                        MessageBox.Show(
+                            "V zadanom adresári " + Declare.DEST_PATH + " nemáte nainštalovanú minimálnu požadovanú verziu programu OLYMP. " +
+                            Environment.NewLine + Environment.NewLine +
+                            "Pre duplicitnú inštaláciu programu do viacerých priečinkov použite DVD, alebo OlympInstall.exe.",
+                            Declare.TTITLE,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        splna = false;
+                    }
+
+                    // upgrade je starsi ako nainstalovana verzia
+                    if (splna && Declare.JePrvaVerziaStarsia(Declare.MAJOR, Declare.MINOR, Declare.REVISION, Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION) == -1)
+                    {
+                        var res = MessageBox.Show(
+                            "V zadanom adresári " + Declare.DEST_PATH + " je nainštalovaná novšia verzia programu OLYMP " +
+                            "ako je verzia UPGRADE." + Environment.NewLine + Environment.NewLine +
+                            "Chcete aj napriek tomu inštalovať komponenty programu OLYMP do zadaného adresára?",
+                            Declare.TTITLE,
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question,
+                            MessageBoxDefaultButton.Button2);
+
+                        if (res == DialogResult.No) splna = false;
+                    }
+
+                    // nie je nahodou spustena Alfa32.exe  -> Olymp.exe??? 
+                    if (splna && JeSpustenyProgram(Declare.DEST_PATH, Declare.SUBOR_EXE))
+                    {
+                        MessageBox.Show(
+                            "Nie je možné inštalovať UPGRADE, pretože program OLYMP v adresári " + Declare.DEST_PATH + " je práve spustený." +
+                            Environment.NewLine + Environment.NewLine +
+                            "Musíte najskôr ukončiť spustený program OLYMP.",
+                            Declare.TTITLE,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        splna = false;
+                    }
+                    else //if (splna)
+                    {
+                        // porovnám pôvodnú verziu a novú
+                        string crv2Path = Path.Combine(Declare.DEST_PATH, "CRV2Kros.exe");
+                        Declare.DajVerziuExe(crv2Path, out P_CRV2_MAJOR, out P_CRV2_MINOR, out P_CRV2_REVISION);
+
+                        string oldV = $"{P_CRV2_MAJOR}.{P_CRV2_MINOR}.{P_CRV2_REVISION}";
+                        string newV = $"{Declare.N_CRV2_MAJOR}.{Declare.N_CRV2_MINOR}.{Declare.N_CRV2_REVISION}";
+
+                        if (oldV != newV)
+                        {
+                            if (JeSpustenyProgram(Declare.DEST_PATH, "CRV2Kros.exe"))
+                            {
+                                MessageBox.Show(
+                                    "Nie je možné inštalovať UPGRADE, pretože tlačový modul programu Olymp - program CRV2Kros.exe je stále spustený." +
+                                    Environment.NewLine + Environment.NewLine +
+                                    "Ukončite program CRV2Kros.exe cez Správcu úloh, alebo reštartuje počítač.",
+                                    Declare.TTITLE,
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Exclamation);
+                                splna = false;
+                            }
+                        }
+                    }
+                }
+
+                if (splna)
+                {
+                    tabControl1.SelectTab(1);//Pnl(5)
+                    Instaluj();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnChangeDir_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Tag = Declare.DEST_PATH;
+
+                // Path.Show vbModal  -> FolderBrowserDialog
+                using (var dlg = new FolderBrowserDialog())
+                {
+                    dlg.Description = "Vyberte cieľový priečinok pre inštaláciu OLYMP";
+                    dlg.ShowNewFolderButton = true;
+                    if (!string.IsNullOrWhiteSpace(Declare.DEST_PATH) && Directory.Exists(Declare.DEST_PATH))
+                        dlg.SelectedPath = Declare.DEST_PATH;
+
+                    if (dlg.ShowDialog(this) == DialogResult.OK)
+                    {
+                        // NastavCestu lblDest, Me.Tag, True  -> nastav label podľa vybraného priečinka
+                        NastavCestu(lblDest, dlg.SelectedPath, true);
+                    }
+                    else
+                    {
+                        // ak zrušené, vráť sa na pôvodnú cestu z this.Tag
+                        NastavCestu(lblDest, (this.Tag as string) ?? string.Empty, true);
+                    }
+                }
+
+                Declare.DEST_PATH = lblDest.Text;
+
+                if (!string.Equals(Declare.DEST_PATH, Declare.DEST_PATH_NEZNAMY, StringComparison.OrdinalIgnoreCase) && Declare.MAJOR == 0)
+                {
+                    lblUpgrade.Text = DajVerziuUpgrade();
+                    lblExe.Text = DajVerziuProgramu();
+                    btnOk.Enabled = true;
+                    this.Text = $"OLYMP {lblUpgrade.Text} - Sprievodca inštaláciou";
+                }
+                else
+                {
+                    lblExe.Text = DajVerziuProgramu();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnStorno_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_Stav == 1)
+                {
+                    Koniec();
+                    return;
+                }
+
+                if (_Stav == 2)
+                {
+                    CheckAcrobatAndInstall();
+
+                    if (Declare.RESTARTUJ)
+                    {
+                        var res = MessageBox.Show(
+                            "Boli vykonané systémové zmeny, ktoré vyžadujú reštart počítača.\r\n" +
+                            "Kým nebude počítač reštartovaný, program OLYMP a niektoré ďalšie programy nemusia pracovať správne.\r\n\r\n" +
+                            "Chcete počítač reštartovať teraz?",
+                            Declare.TTITLE,
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question
+                        );
+
+                        if (res == DialogResult.Yes)
+                        {
+                            if (!Declare.Restart())
+                            {
+                                MessageBox.Show(
+                                    "Nepodarilo sa reštartovať počítač. Skúste počítač reštartovať manuálne.",
+                                    "Informácia",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information
+                                );
+                            }
+                            else
+                                this.Close();// UkonciProgram();
+
+                        }
+
+                        this.Close();
+                    }
+                    else
+                        this.Close();
+                }
+
+                if (MessageBox.Show(
+                        "Inštalácia programu OLYMP nebola dokončená.\r\n\r\n" +
+                        "Prajete si ukončiť inštalačný program, aj keď neboli nainštalované žiadne komponenty?",
+                        Declare.TTITLE,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question,
+                        MessageBoxDefaultButton.Button2
+                    ) == DialogResult.Yes)
+                {
+                    this.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void linkLabelKros_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {            
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = URL_KROS,
+                    UseShellExecute = true
+                });
+                //linkLabelKros.LinkVisited = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        #endregion Event handlers
+
+        #region Methods
+
+        /// <summary>
+        /// ulozi vysledok instalacie - obsah listboxu
+        /// </summary>
+        private void UlozitVysledok()
+        {
+            string subor = Declare.DEST_PATH + $"Instal_Olymp_datum[{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}]_cas[{DateTime.Now.Hour}-{DateTime.Now.Minute}-{DateTime.Now.Second}].log";
+
+            try
+            {
+                // Attempt to delete the file if it already exists
+                if (File.Exists(subor))
+                {
+                    File.Delete(subor);
+                }
+
+                // Open file for writing
+                using (StreamWriter sw = new StreamWriter(subor, false))
+                {
+                    foreach (var item in lst.Items)
+                    {
+                        sw.WriteLine(item.ToString());
+                    }
+                }
+
+                MessageBox.Show($"Výsledok inštalácie bol uložený do súboru {subor}", Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Nepodarilo sa uložiť výsledok inštalácie.", Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         /// <summary>
         /// samotna instalacia
         /// </summary>
@@ -169,15 +545,30 @@ namespace OlympUpgrade
         {
             btnOk.Visible = false;
             btnStorno.Enabled = false;
-            OverLicenciu();
+            Application.DoEvents();
+
+            OverLicenciu();            
+
             OverVolneMiesto();
+            Application.DoEvents();
+
             // OverArchiv         'toto s novym komponentom nevieme
             // VymazSuboryStarejAlfy
+
             KopirujSubory();
+            Application.DoEvents();
+
             InstalujHotFixPreMapi();//TODO Win61xXX.msu sa nenachdza v Zdroje
+            Application.DoEvents();
+
             UlozDoRegistrovVerziu();
+            Application.DoEvents();
+
             Thread.Sleep(500); //iba kvoli tomu, aby to neprefrcalo tak rychlo
+            Application.DoEvents();
+
             ZobrazVysledok();
+            Application.DoEvents();
         }
 
         private void ZobrazVysledok()
@@ -186,7 +577,6 @@ namespace OlympUpgrade
             {
                 //Pnl(5).Top = 6500
                 //Pnl(3).Top = 0
-                //Pnl(3).ZOrder
                 tabControl1.SelectTab(3);
 
                 _Stav = 1;
@@ -203,7 +593,6 @@ namespace OlympUpgrade
             {
                 //Pnl(5).Top = 6500
                 //Pnl(4).Top = 0
-                //Pnl(4).ZOrder
                 tabControl1.SelectTab(2);
 
                 _Stav = 2;
@@ -250,10 +639,11 @@ namespace OlympUpgrade
                     Declare.ZapisHodnotuReg(
                         Registry.ClassesRoot,
                         $@"Installer\Products\{RegProductCode}",
-                        "ProductName",
+                        "ProductName2",
                         $"OLYMP {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
                 }
 
+                //MessageBox.Show("BEFORE reg OLYMP22 S-1-5-18");
                 //zobrazovane v MSI pri instalacii vyssej verzie
                 string installProps = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{RegProductCode}\InstallProperties";
                 if (Declare.ExistujeKlucReg(Registry.LocalMachine, installProps))
@@ -262,7 +652,9 @@ namespace OlympUpgrade
                         Registry.LocalMachine,
                         installProps,
                         "DisplayName",
-                        $"OLYMP {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
+                        $"OLYMP22 {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
+
+                    //MessageBox.Show("AFTER reg OLYMP22");
                 }
 
                 string uninstallKey = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode}";
@@ -781,7 +1173,6 @@ namespace OlympUpgrade
 
             return sb.ToString();
         }
-
 
         private void VymazStareSubory()
         {
@@ -1403,95 +1794,6 @@ namespace OlympUpgrade
             return false;
         }
 
-        private void OlympUpgrade_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                int i;
-                List<string> poleArg;
-                string pom = string.Empty;
-
-                HideTabs();
-
-                tabControl1.SelectTab(0);
-                _Stav = 0;
-
-                Declare.AKT_ADRESAR = AppDomain.CurrentDomain.BaseDirectory;
-
-                Declare.RESTARTUJ = false;
-                Declare.KOPIRUJ_LICENCIU = 0;
-
-                //zaregistrujChilkat();
-
-                //this.Height = FRM_HEIGHT;
-                //this.Width = FRM_WIDTH;
-                //this.Top = (Screen.Height - this.Height) / 2;
-                //this.Left = (Screen.Width - this.Width) / 2;
-                NastavRok();
-
-                // zistime argument, s ktorym bol program spustany
-
-                poleArg = Environment.GetCommandLineArgs().ToList();
-                poleArg.RemoveAt(0);
-
-                // prvy je parameter, potom je restartuj (true, false) a potom nasleduje instalacny adresar
-                if (poleArg.Count - 1 >= 3)
-                {
-                    Declare.COMMAND_LINE_ARGUMENT = poleArg[0];
-
-                    if (poleArg[1].ToUpper() == "TRUE")
-                        Declare.RESTARTUJ = true;
-
-
-                    int.TryParse(poleArg[2], out Declare.KOPIRUJ_LICENCIU);
-
-                    pom = string.Empty;
-                    for (i = 3; i < poleArg.Count; i++)
-                        pom = pom = pom + poleArg[i] + " ";
-
-                    pom = pom.TrimEnd();
-                }
-
-                // MsgBox "zacinam " & COMMAND_LINE_ARGUMENT
-                // sustil installshield
-                if (!string.IsNullOrEmpty(Declare.COMMAND_LINE_ARGUMENT)
-                    && Declare.COMMAND_LINE_ARGUMENT.ToUpper() == Declare.PARAMETER_INSTAL.ToUpper())
-                {
-                    Declare.TTITLE = "Sprievodca inštaláciou OLYMP";
-                    Declare.KTO_VOLAL = Declare.VOLAL_INSTALL;
-                    OdstranZRegistrovDoinstalovanie();
-                    Declare.DEST_PATH = Declare.PridajLomitko(pom);
-
-                    tabControl1.SelectTab(1);
-
-                    lblUpgrade.Text = DajVerziuUpgrade();
-                }
-                else if (!string.IsNullOrEmpty(Declare.COMMAND_LINE_ARGUMENT)
-                    && (Declare.COMMAND_LINE_ARGUMENT.ToUpper() == Declare.SUBOR_STARA_INSTALACIA_EXE.ToUpper()
-                        || Declare.COMMAND_LINE_ARGUMENT.ToUpper() == Declare.SUBOR_EXE_STARY.ToUpper()))
-                {
-                    // spustil uzivatel
-                    Declare.TTITLE = "OlympUpgrade";
-                    Declare.KTO_VOLAL = Declare.VOLAL_OLYMP;
-                    btnChangeDir.Enabled = false;      // ak to spustal OLYMP, tak nema co menit adresar
-                    NastavCestuVerzie(Declare.PridajLomitko(pom));
-                }
-                else
-                {
-                    // spustil uzivatel
-                    Declare.TTITLE = "OlympUpgrade";
-                    Declare.KTO_VOLAL = Declare.VOLAL_UZIVATEL;
-                    NastavCestuVerzie();
-                }
-
-                this.Text = "OLYMP " + lblUpgrade.Text + " - Sprievodca inštaláciou";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
         /// <summary>
         /// Nastavi cestu, kde je nainstalovany olymp, zisti verzie upgradu a nainstalovaneho execka
         /// </summary>
@@ -1885,6 +2187,7 @@ namespace OlympUpgrade
                 }
             }
         }
+
         private string SafeSubstring(string s, int startZeroBased, int length)
         {
             if (string.IsNullOrEmpty(s) || length <= 0) return string.Empty;
@@ -2082,71 +2385,6 @@ namespace OlympUpgrade
                 Declare.RESTARTUJ = false;
         }
 
-        private void btnStorno_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (_Stav == 1)
-                {
-                    Koniec();
-                    return;
-                }
-
-                if (_Stav == 2)
-                {
-                    CheckAcrobatAndInstall();
-
-                    if (Declare.RESTARTUJ)
-                    {
-                        var res = MessageBox.Show(
-                            "Boli vykonané systémové zmeny, ktoré vyžadujú reštart počítača.\r\n" +
-                            "Kým nebude počítač reštartovaný, program OLYMP a niektoré ďalšie programy nemusia pracovať správne.\r\n\r\n" +
-                            "Chcete počítač reštartovať teraz?",
-                            Declare.TTITLE,
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question
-                        );
-
-                        if (res == DialogResult.Yes)
-                        {
-                            if (!Declare.Restart())
-                            {
-                                MessageBox.Show(
-                                    "Nepodarilo sa reštartovať počítač. Skúste počítač reštartovať manuálne.",
-                                    "Informácia",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information
-                                );
-                            }
-                            else
-                                this.Close();// UkonciProgram();
-
-                        }
-
-                        this.Close();
-                    }
-                    else
-                        this.Close();
-                }
-
-                if (MessageBox.Show(
-                        "Inštalácia programu OLYMP nebola dokončená.\r\n\r\n" +
-                        "Prajete si ukončiť inštalačný program, aj keď neboli nainštalované žiadne komponenty?",
-                        Declare.TTITLE,
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question,
-                        MessageBoxDefaultButton.Button2
-                    ) == DialogResult.Yes)
-                {
-                    this.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
         private void Koniec()
         {
             tabControl1.SelectTab(2);//pnl[4]
@@ -2218,5 +2456,7 @@ namespace OlympUpgrade
             }
             return false;
         }
+
+        #endregion Methods
     }
 }
