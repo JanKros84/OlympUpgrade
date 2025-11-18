@@ -56,15 +56,14 @@
             this.label9 = new System.Windows.Forms.Label();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.linkLabelThx = new System.Windows.Forms.LinkLabel();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.linkLabelKros = new System.Windows.Forms.LinkLabel();
             this.label8 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.lblInfo = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
-            this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.panel5 = new System.Windows.Forms.Panel();
             this.tabPage4 = new System.Windows.Forms.TabPage();
@@ -79,6 +78,7 @@
             this.btnStorno = new System.Windows.Forms.Button();
             this.lblCopyright = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.linkLabelEmail = new System.Windows.Forms.LinkLabel();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -368,15 +368,15 @@
             // panel4
             // 
             this.panel4.BackColor = System.Drawing.Color.White;
+            this.panel4.Controls.Add(this.linkLabelEmail);
+            this.panel4.Controls.Add(this.linkLabelThx);
             this.panel4.Controls.Add(this.pictureBox2);
             this.panel4.Controls.Add(this.linkLabelKros);
             this.panel4.Controls.Add(this.label8);
             this.panel4.Controls.Add(this.label11);
-            this.panel4.Controls.Add(this.label7);
             this.panel4.Controls.Add(this.label6);
             this.panel4.Controls.Add(this.lblInfo);
             this.panel4.Controls.Add(this.label10);
-            this.panel4.Controls.Add(this.label12);
             this.panel4.Controls.Add(this.label13);
             this.panel4.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel4.Location = new System.Drawing.Point(196, 0);
@@ -385,10 +385,25 @@
             this.panel4.Size = new System.Drawing.Size(404, 352);
             this.panel4.TabIndex = 5;
             // 
+            // linkLabelThx
+            // 
+            this.linkLabelThx.LinkArea = new System.Windows.Forms.LinkArea(188, 11);
+            this.linkLabelThx.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
+            this.linkLabelThx.Location = new System.Drawing.Point(14, 48);
+            this.linkLabelThx.Name = "linkLabelThx";
+            this.linkLabelThx.Size = new System.Drawing.Size(358, 50);
+            this.linkLabelThx.TabIndex = 13;
+            this.linkLabelThx.TabStop = true;
+            this.linkLabelThx.Text = "Ďakujeme Vám, že ste si pre svoju prácu vybrali práve náš produkt. Veríme, že s n" +
+    "ím a so službami, ktoré poskytujeme, budete spokojní. Najnovší UPGRADE nájdete v" +
+    "ždy na internetovej adrese www.kros.sk.";
+            this.linkLabelThx.UseCompatibleTextRendering = true;
+            this.linkLabelThx.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabelKros_LinkClicked);
+            // 
             // pictureBox2
             // 
             this.pictureBox2.Image = global::OlympUpgrade.Properties.Resources.logo;
-            this.pictureBox2.Location = new System.Drawing.Point(209, 119);
+            this.pictureBox2.Location = new System.Drawing.Point(209, 121);
             this.pictureBox2.Name = "pictureBox2";
             this.pictureBox2.Size = new System.Drawing.Size(99, 115);
             this.pictureBox2.TabIndex = 12;
@@ -398,7 +413,7 @@
             // 
             this.linkLabelKros.AutoSize = true;
             this.linkLabelKros.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
-            this.linkLabelKros.Location = new System.Drawing.Point(11, 179);
+            this.linkLabelKros.Location = new System.Drawing.Point(11, 182);
             this.linkLabelKros.Name = "linkLabelKros";
             this.linkLabelKros.Size = new System.Drawing.Size(68, 13);
             this.linkLabelKros.TabIndex = 11;
@@ -408,7 +423,7 @@
             // 
             // label8
             // 
-            this.label8.Location = new System.Drawing.Point(11, 236);
+            this.label8.Location = new System.Drawing.Point(11, 238);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(140, 33);
             this.label8.TabIndex = 10;
@@ -418,25 +433,17 @@
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label11.Location = new System.Drawing.Point(11, 221);
+            this.label11.Location = new System.Drawing.Point(11, 225);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(86, 13);
             this.label11.TabIndex = 9;
             this.label11.Text = "Telefón a fax:";
             // 
-            // label7
-            // 
-            this.label7.Location = new System.Drawing.Point(11, 193);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(140, 15);
-            this.label7.TabIndex = 8;
-            this.label7.Text = "olymp@kros.sk";
-            // 
             // label6
             // 
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.label6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
-            this.label6.Location = new System.Drawing.Point(11, 106);
+            this.label6.Location = new System.Drawing.Point(11, 108);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(140, 48);
             this.label6.TabIndex = 7;
@@ -447,7 +454,7 @@
             this.lblInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
             this.lblInfo.Location = new System.Drawing.Point(11, 287);
             this.lblInfo.Name = "lblInfo";
-            this.lblInfo.Size = new System.Drawing.Size(383, 49);
+            this.lblInfo.Size = new System.Drawing.Size(383, 65);
             this.lblInfo.TabIndex = 5;
             this.lblInfo.Text = "Stlačením tlačidla Spusti spustíte práve nainštalovaný program OLYMP. Ak stlačíte" +
     " tlačidlo Koniec, môžete spustiť program OLYMP obvyklým spôsobom kedykoľvek nesk" +
@@ -457,21 +464,11 @@
             // 
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label10.Location = new System.Drawing.Point(11, 165);
+            this.label10.Location = new System.Drawing.Point(11, 167);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(55, 13);
             this.label10.TabIndex = 4;
             this.label10.Text = "Internet:";
-            // 
-            // label12
-            // 
-            this.label12.Location = new System.Drawing.Point(11, 49);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(358, 48);
-            this.label12.TabIndex = 2;
-            this.label12.Text = "Ďakujeme Vám, že ste si pre svoju prácu vybrali práve náš produkt. Veríme, že s n" +
-    "ím a so službami, ktoré poskytujeme, budete spokojní. Najnovší UPGRADE nájdete v" +
-    "ždy na internetovej adrese www.kros.sk.";
             // 
             // label13
             // 
@@ -499,7 +496,6 @@
             this.tabPage4.Controls.Add(this.panel8);
             this.tabPage4.Location = new System.Drawing.Point(4, 19);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage4.Size = new System.Drawing.Size(600, 352);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "tabPage4";
@@ -510,24 +506,24 @@
             this.panel9.Controls.Add(this.lst);
             this.panel9.Controls.Add(this.label17);
             this.panel9.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel9.Location = new System.Drawing.Point(199, 3);
+            this.panel9.Location = new System.Drawing.Point(196, 0);
             this.panel9.Name = "panel9";
-            this.panel9.Size = new System.Drawing.Size(398, 346);
+            this.panel9.Size = new System.Drawing.Size(404, 352);
             this.panel9.TabIndex = 6;
             // 
             // lst
             // 
             this.lst.FormattingEnabled = true;
-            this.lst.Location = new System.Drawing.Point(16, 33);
+            this.lst.Location = new System.Drawing.Point(16, 27);
             this.lst.Name = "lst";
-            this.lst.Size = new System.Drawing.Size(363, 290);
+            this.lst.Size = new System.Drawing.Size(375, 316);
             this.lst.TabIndex = 3;
             // 
             // label17
             // 
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label17.Location = new System.Drawing.Point(13, 13);
+            this.label17.Location = new System.Drawing.Point(13, 4);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(143, 16);
             this.label17.TabIndex = 2;
@@ -537,10 +533,10 @@
             // 
             this.panel8.BackgroundImage = global::OlympUpgrade.Properties.Resources.KrosPersonalistikaMzdy;
             this.panel8.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel8.Location = new System.Drawing.Point(3, 3);
+            this.panel8.Location = new System.Drawing.Point(0, 0);
             this.panel8.Margin = new System.Windows.Forms.Padding(0);
             this.panel8.Name = "panel8";
-            this.panel8.Size = new System.Drawing.Size(196, 346);
+            this.panel8.Size = new System.Drawing.Size(196, 352);
             this.panel8.TabIndex = 5;
             // 
             // panel1
@@ -566,6 +562,7 @@
             this.btnSpat.Text = "< S&päť";
             this.btnSpat.UseVisualStyleBackColor = true;
             this.btnSpat.Visible = false;
+            this.btnSpat.Click += new System.EventHandler(this.btnSpat_Click);
             // 
             // btnDalej
             // 
@@ -601,11 +598,23 @@
             // lblCopyright
             // 
             this.lblCopyright.AutoSize = true;
-            this.lblCopyright.Location = new System.Drawing.Point(12, 15);
+            this.lblCopyright.Location = new System.Drawing.Point(19, 15);
             this.lblCopyright.Name = "lblCopyright";
             this.lblCopyright.Size = new System.Drawing.Size(61, 13);
             this.lblCopyright.TabIndex = 0;
             this.lblCopyright.Text = "lblCopyright";
+            // 
+            // linkLabelEmail
+            // 
+            this.linkLabelEmail.AutoSize = true;
+            this.linkLabelEmail.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
+            this.linkLabelEmail.Location = new System.Drawing.Point(11, 197);
+            this.linkLabelEmail.Name = "linkLabelEmail";
+            this.linkLabelEmail.Size = new System.Drawing.Size(79, 13);
+            this.linkLabelEmail.TabIndex = 14;
+            this.linkLabelEmail.TabStop = true;
+            this.linkLabelEmail.Text = "olymp@kros.sk";
+            this.linkLabelEmail.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabelEmail_LinkClicked);
             // 
             // OlympUpgrade
             // 
@@ -621,6 +630,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Olymp";
             this.Activated += new System.EventHandler(this.OlympUpgrade_Activated);
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OlympUpgrade_FormClosed);
             this.Load += new System.EventHandler(this.OlympUpgrade_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
@@ -672,10 +682,8 @@
         private System.Windows.Forms.Panel panel4;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label lblInfo;
-        private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.Panel panel5;
-        private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label11;
@@ -696,6 +704,8 @@
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.ListBox lst;
         private System.Windows.Forms.PictureBox pictureBox2;
+        private System.Windows.Forms.LinkLabel linkLabelThx;
+        private System.Windows.Forms.LinkLabel linkLabelEmail;
     }
 }
 

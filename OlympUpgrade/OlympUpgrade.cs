@@ -11,14 +11,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace OlympUpgrade
 {
     public partial class OlympUpgrade : Form
     {
-        private const string URL_KROS = "https://www.kros.sk/";
-
         /// <summary>
         /// v akom kroku instalacie je formular - sluzi na to co maju tlacidla robit
         /// </summary>
@@ -27,25 +24,20 @@ namespace OlympUpgrade
         private bool _BoliChyby;
 
         private double _PocetNaTik;
-
         private long _AktTik;
 
         private List<string> _Chybne = new List<string>();
         private List<string> _Spravne = new List<string>();
         private List<string> _Preskocene = new List<string>();
-        //Dictionary<string, object> _PomCol = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
         private List<string> _PomCol = new List<string>();
-        private List<string> _LstVysledok = new List<string>();
 
-        private Encoding _zipEncoding = Encoding.GetEncoding(437); //TODO uistit sa 1250/852/850 - DotNetZip (Ionic.Zip) v1.9.1.8 default IBM437. Funguje aj s 852/850
+        private Encoding _zipEncoding = Encoding.GetEncoding(437); //Z Creatora -> DotNetZip (Ionic.Zip) v1.9.1.8 default IBM437. Funguje aj s 852/850
 
         private DialogResult _resVysledok_Activated = DialogResult.Yes;
 
         public OlympUpgrade()
         {
-            Application.DoEvents();
             InitializeComponent();
-            Application.DoEvents();
         }
 
         #region Event handlers
@@ -133,6 +125,7 @@ namespace OlympUpgrade
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -144,7 +137,7 @@ namespace OlympUpgrade
                 // Skontroluj, kto zavolal funkciu (inštalácia)
                 if (Declare.KTO_VOLAL == Declare.VOLAL_INSTALL)
                 {
-                    // Zobraziť okno v popredí
+                    //aby sa dal dopredu, ale dal sa posunut aj dozadu
                     //SetWindowPos(this.Handle, (IntPtr)HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW);
                     this.TopMost = true;
                     Application.DoEvents();
@@ -205,6 +198,7 @@ namespace OlympUpgrade
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -217,6 +211,7 @@ namespace OlympUpgrade
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -370,6 +365,7 @@ namespace OlympUpgrade
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -416,6 +412,7 @@ namespace OlympUpgrade
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -457,14 +454,21 @@ namespace OlympUpgrade
                                 );
                             }
                             else
+                            {
                                 this.Close();// UkonciProgram();
+                                return;
+                            }
 
                         }
 
                         this.Close();
+                        return;
                     }
                     else
+                    {
                         this.Close();
+                        return;
+                    }
                 }
 
                 if (MessageBox.Show(
@@ -481,25 +485,61 @@ namespace OlympUpgrade
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void linkLabelKros_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {            
+        {
             try
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = URL_KROS,
+                    FileName = Declare.URL_KROS,
                     UseShellExecute = true
                 });
-                //linkLabelKros.LinkVisited = true;
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+
+        private void linkLabelEmail_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            try
+            {
+                if (!(sender is LinkLabel lbl)) return;
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = $"mailto:{lbl.Text}",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString());
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSpat_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OlympUpgrade_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            try
+            {
+                //TODO comment after testing
+                SaveResults(GetResultFile());
+            }
+            catch { }
         }
 
         #endregion Event handlers
@@ -511,18 +551,35 @@ namespace OlympUpgrade
         /// </summary>
         private void UlozitVysledok()
         {
-            string subor = Declare.DEST_PATH + $"Instal_Olymp_datum[{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}]_cas[{DateTime.Now.Hour}-{DateTime.Now.Minute}-{DateTime.Now.Second}].log";
-
             try
             {
-                // Attempt to delete the file if it already exists
-                if (File.Exists(subor))
-                {
-                    File.Delete(subor);
-                }
+                string subor = GetResultFile();
+                SaveResults(subor);
 
-                // Open file for writing
-                using (StreamWriter sw = new StreamWriter(subor, false))
+                MessageBox.Show($"Výsledok inštalácie bol uložený do súboru {subor}", Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString());
+                MessageBox.Show("Nepodarilo sa uložiť výsledok inštalácie.", Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GetResultFile() => Path.Combine(Declare.DEST_PATH, $"Instal_Olymp_datum[{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}]_cas[{DateTime.Now.Hour}-{DateTime.Now.Minute}-{DateTime.Now.Second}].log");
+
+        private void SaveResults(string file)
+        {
+
+            // Attempt to delete the file if it already exists
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+            }
+
+            // Open file for writing
+            using (StreamWriter sw = new StreamWriter(file, false))
+            {
+                if (lst.Items != null && lst.Items.Count > 0)
                 {
                     foreach (var item in lst.Items)
                     {
@@ -530,11 +587,18 @@ namespace OlympUpgrade
                     }
                 }
 
-                MessageBox.Show($"Výsledok inštalácie bol uložený do súboru {subor}", Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("Nepodarilo sa uložiť výsledok inštalácie.", Declare.TTITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (Declare.Errors != null && Declare.Errors.Count > 0)
+                {
+                    sw.WriteLine();
+                    sw.WriteLine();
+                    sw.WriteLine("====== DETAIL CHÝB ======");
+                    sw.WriteLine();
+                    foreach (var error in Declare.Errors)
+                    {
+                        sw.WriteLine(error);
+                        sw.WriteLine("------");
+                    }
+                }
             }
         }
 
@@ -547,7 +611,7 @@ namespace OlympUpgrade
             btnStorno.Enabled = false;
             Application.DoEvents();
 
-            OverLicenciu();            
+            OverLicenciu();
 
             OverVolneMiesto();
             Application.DoEvents();
@@ -639,7 +703,7 @@ namespace OlympUpgrade
                     Declare.ZapisHodnotuReg(
                         Registry.ClassesRoot,
                         $@"Installer\Products\{RegProductCode}",
-                        "ProductName2",
+                        "ProductName",
                         $"OLYMP {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
                 }
 
@@ -652,7 +716,7 @@ namespace OlympUpgrade
                         Registry.LocalMachine,
                         installProps,
                         "DisplayName",
-                        $"OLYMP22 {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
+                        $"OLYMP {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
 
                     //MessageBox.Show("AFTER reg OLYMP22");
                 }
@@ -664,7 +728,7 @@ namespace OlympUpgrade
                         Registry.LocalMachine,
                         uninstallKey,
                         "DisplayName",
-                        $"OLYMP2 {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
+                        $"OLYMP {Declare.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
 
                     Declare.ZapisHodnotuReg(
                        Registry.LocalMachine,
@@ -733,16 +797,11 @@ namespace OlympUpgrade
                             WindowStyle = ProcessWindowStyle.Hidden
                         };
 
-                        // fire-and-forget (VB6 Shell behavior)
                         Process.Start(psi);
                     }
-                    // else: silently do nothing (matching On Error Resume Next spirit)
                 }
             }
-            catch
-            {
-                // swallow any error like VB6's On Error Resume Next
-            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
         }
 
         /// <summary>
@@ -750,8 +809,8 @@ namespace OlympUpgrade
         /// </summary>
         public void KopirujSubory()
         {
-            int i, zipRes, zipRes2, BolaChyba, pocet;
-            string pom, pom1, povodnaVerziaX;
+            int pocet;
+            string povodnaVerziaX;
             long povodnaVerzia, chyba;
             bool prepis;
             var neprepisovatDBS = new List<string>(); ;
@@ -814,10 +873,12 @@ namespace OlympUpgrade
                                     {
                                         try
                                         {
+                                            Directory.CreateDirectory(Path.GetDirectoryName(destPath));
                                             entry.ExtractToFile(destPath, overwrite: true);
                                         }
-                                        catch
+                                        catch (Exception ex)
                                         {
+                                            Declare.Errors.Add(ex.ToString());
                                             _PomCol.Add(destPath);
                                             chyba++;
                                         }
@@ -857,12 +918,16 @@ namespace OlympUpgrade
                     {
                         long parseVal = 0;
                         povodnaVerziaX = DajVerziuProgramu();
-                        long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
+                        if (povodnaVerziaX.IndexOf(".") > -1)
+                            long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
                         povodnaVerzia = parseVal * 100;
 
                         parseVal = 0;
-                        povodnaVerziaX = povodnaVerziaX.Substring(povodnaVerziaX.IndexOf(".") + 1);
-                        long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
+                        if (povodnaVerziaX.IndexOf(".") > -1)
+                        {
+                            povodnaVerziaX = povodnaVerziaX.Substring(povodnaVerziaX.IndexOf(".") + 1);
+                            long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
+                        }
                         povodnaVerzia = povodnaVerzia + parseVal;
 
                         if (povodnaVerzia < 946)
@@ -886,7 +951,7 @@ namespace OlympUpgrade
                         VymazZostavy("Reporty\\PDF\\", "pdf");
 
                     }
-                    catch { }
+                    catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
 
                     // --- rozbal systémové reporty podľa listov ---
                     RozbalZostavy(zip, "Reporty\\", "\\.RPT", Declare.FILE_REPORTY_TXT);
@@ -1007,7 +1072,7 @@ namespace OlympUpgrade
                         var src = Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP);
                         File.Copy(src, upgradeZipPath, overwrite: true);
                     }
-                    catch { copyOk = false; }
+                    catch (Exception ex) { Declare.Errors.Add(ex.ToString()); copyOk = false; }
 
                     if (copyOk)
                     {
@@ -1017,7 +1082,7 @@ namespace OlympUpgrade
                             TryToDeleteFile(Path.Combine(Declare.DEST_PATH, Declare.SUBOR_ZIP));
                     }
                 }
-                catch { }
+                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
 
                 //Copy SUBOR_INST
                 try
@@ -1038,9 +1103,8 @@ namespace OlympUpgrade
                         File.Copy(destINST_Path, upgradeINST_Path, overwrite: true);
                         TryToDeleteFile(destINST_Path);
                     }
-
                 }
-                catch { }
+                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
 
                 //Copy SUBOR_INST_NEW
                 try
@@ -1074,21 +1138,25 @@ namespace OlympUpgrade
                         pocet = pocet + 1;
                     }
                 }
-                catch { }
+                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
 
                 ProgresiaDone();
                 ZapisVysledokDoListu();
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 MessageBox.Show($"Nastala chyba pri rozzipovani Erl : {ex.ToString()}\r\n\r\n {VratZoznam()}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
+        /// <summary>
+        /// Zapise vysledok instalacie do listboxu
+        /// </summary>
         private void ZapisVysledokDoListu()
         {
-            _LstVysledok.Clear();
-            _LstVysledok.Add(string.Empty);
+            lst.Items.Clear();
+            lst.Items.Add(string.Empty);
 
             if (_Chybne == null) _Chybne = new List<string>();
             if (_Preskocene == null) _Preskocene = new List<string>();
@@ -1096,60 +1164,52 @@ namespace OlympUpgrade
 
             if (_Chybne.Count == 0)
             {
-                _LstVysledok.Add("   Inštalácia prebehla bez chýb.");
+                lst.Items.Add("   Inštalácia prebehla bez chýb.");
                 _BoliChyby = false;
             }
             else
             {
-                _LstVysledok.Add("   Inštalácia prebehla s chybami!");
+                lst.Items.Add("   Inštalácia prebehla s chybami!");
                 _BoliChyby = true;
             }
 
             if (Declare.KTO_VOLAL == Declare.VOLAL_UZIVATEL || Declare.KTO_VOLAL == Declare.VOLAL_OLYMP)
             {
-                _LstVysledok.Add(string.Empty);
-                _LstVysledok.Add("   Verzia pred inštaláciou: \t" + lblExe.Text);
-                _LstVysledok.Add("   Verzia aktuálna: \t\t" + lblUpgrade.Text);
+                lst.Items.Add(string.Empty);
+                lst.Items.Add("   Verzia pred inštaláciou: \t" + lblExe.Text);
+                lst.Items.Add("   Verzia aktuálna: \t\t" + lblUpgrade.Text);
             }
 
-            _LstVysledok.Add(string.Empty);
-            _LstVysledok.Add("   Počet neinštalovaných kvôli chybe: \t" + _Chybne.Count);
-            _LstVysledok.Add("   Počet preskočených: \t\t" + _Preskocene.Count);
-            _LstVysledok.Add("   Počet správne inštalovaných: \t" + _Spravne.Count);
+            lst.Items.Add(string.Empty);
+            lst.Items.Add("   Počet neinštalovaných kvôli chybe: \t" + _Chybne.Count);
+            lst.Items.Add("   Počet preskočených: \t\t" + _Preskocene.Count);
+            lst.Items.Add("   Počet správne inštalovaných: \t" + _Spravne.Count);
 
             if (_Chybne.Count > 0)
             {
-                _LstVysledok.Add(string.Empty);
-                _LstVysledok.Add("== Neinštalované komponenty kvôli chybe ========================");
-                _LstVysledok.Add(string.Empty);
+                lst.Items.Add(string.Empty);
+                lst.Items.Add("== Neinštalované komponenty kvôli chybe ========================");
+                lst.Items.Add(string.Empty);
                 foreach (var s in _Chybne)
-                    _LstVysledok.Add("   " + s);
+                    lst.Items.Add("   " + s);
             }
 
             if (_Preskocene.Count > 0)
             {
-                _LstVysledok.Add(string.Empty);
-                _LstVysledok.Add("== Preskočené komponenty ====================================");
-                _LstVysledok.Add(string.Empty);
+                lst.Items.Add(string.Empty);
+                lst.Items.Add("== Preskočené komponenty ====================================");
+                lst.Items.Add(string.Empty);
                 foreach (var s in _Preskocene)
-                    _LstVysledok.Add("   " + s);
+                    lst.Items.Add("   " + s);
             }
 
             if (_Spravne.Count > 0)
             {
-                _LstVysledok.Add(string.Empty);
-                _LstVysledok.Add("== Inštalované komponenty ====================================");
-                _LstVysledok.Add(string.Empty);
+                lst.Items.Add(string.Empty);
+                lst.Items.Add("== Inštalované komponenty ====================================");
+                lst.Items.Add(string.Empty);
                 foreach (var s in _Spravne)
-                    _LstVysledok.Add("   " + s);
-            }
-
-
-            //TODO _LstVysledok asi netreba
-            lst.Items.Clear();
-            foreach (var line in _LstVysledok)
-            {
-                lst.Items.Add(line);
+                    lst.Items.Add("   " + s);
             }
 
             _Chybne.Clear();
@@ -1194,11 +1254,11 @@ namespace OlympUpgrade
             {
                 foreach (var file in Directory.EnumerateFiles(directory, searchPattern, SearchOption.TopDirectoryOnly))
                 {
-                    try { File.SetAttributes(file, FileAttributes.Normal); } catch { }
-                    try { File.Delete(file); } catch { }
+                    try { File.SetAttributes(file, FileAttributes.Normal); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+                    try { File.Delete(file); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
                 }
             }
-            catch { }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
         }
 
         private void CopyFileIfExists(string sourcePath, string destPath, string file)
@@ -1221,8 +1281,9 @@ namespace OlympUpgrade
 
                     _Spravne.Add(file);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Declare.Errors.Add(ex.ToString());
                     MessageBox.Show(
                         $"Nastala chyba pri kopírovaní súborov do adresára {destFilePath}\r\n\r\n" +
                         "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
@@ -1336,14 +1397,18 @@ namespace OlympUpgrade
         {
             try
             {
+                Directory.CreateDirectory(destPath);
                 entry.ExtractToFile(Path.Combine(destPath, entry.Name), overwrite: true);
                 lblDestFile.Text = $"{entry.FullName}";
                 lblDestFile.Refresh();
+
+                //Thread.Sleep(10);//iba kvoli tomu, aby to neprefrcalo tak rychlo
 
                 _Spravne.Add(entry.FullName);
             }
             catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 _PomCol.Add($"{entry.FullName} ex: {ex.Message}");
             }
             ProgresiaTik();
@@ -1381,7 +1446,7 @@ namespace OlympUpgrade
             {
                 var fileName = Path.GetFileName(filePath);
 
-                try { File.SetAttributes(filePath, FileAttributes.Normal); } catch { }
+                try { File.SetAttributes(filePath, FileAttributes.Normal); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
 
                 if (fileName.Length >= 6 && fileName[3] == '-')
                 {
@@ -1401,7 +1466,7 @@ namespace OlympUpgrade
                                 else
                                     File.Move(filePath, newPath);
                             }
-                            catch { }
+                            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
                         }
                     }
                 }
@@ -1423,12 +1488,18 @@ namespace OlympUpgrade
                 NastavPrava(dir, maska, FileAttributes.Normal);
                 try
                 {
-                    foreach (var path in Directory.GetFiles(dir, maska))
-                    {
-                        try { File.Delete(path); } catch { }
-                    }
+                    if (Directory.Exists(dir))
+                        foreach (var path in Directory.GetFiles(dir, maska))
+                        {
+                            try
+                            {
+                                if (File.Exists(path))
+                                    File.Delete(path);
+                            }
+                            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+                        }
                 }
-                catch { /* adresár neexistuje a pod. – pokračuj */ }
+                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
             }
         }
 
@@ -1442,10 +1513,10 @@ namespace OlympUpgrade
             {
                 foreach (var path in Directory.GetFiles(CestaVym, sablona))
                 {
-                    try { File.SetAttributes(path, prava); } catch { }
+                    try { File.SetAttributes(path, prava); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
                 }
             }
-            catch { }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
         }
 
         /// <summary>
@@ -1547,14 +1618,15 @@ namespace OlympUpgrade
                         // Rátame iba súbory (nie adresáre)
                         bool isDirectory = e.Name.Length == 0 || e.FullName.EndsWith("/", StringComparison.Ordinal);
                         if (!isDirectory)
-                            sum += e.Length; // uncompressed size
+                        {
+                            sum += e.Length; // uncompressed size/
+                        }
                     }
-                    catch { }
+                    catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
 
                     ProgresiaTik();
                 }
             }
-
             return sum;
         }
 
@@ -1582,127 +1654,129 @@ namespace OlympUpgrade
                 ProgresiaTik();
 
                 //TODO Tato cast nikdy nepojde -> Mzdy.lic
-                // 2) Pozri licenciu na inštalačkách (ak je v akt. adresári a nie je to istý adresár ako cieľ)
-                string aktLicPath = Declare.PridajLomitko(Declare.AKT_ADRESAR) + Declare.LICENCIA;
-                if (Declare.ExistujeSubor(aktLicPath) &&
-                    !string.Equals(Declare.PridajLomitko(Declare.AKT_ADRESAR), Declare.DEST_PATH, StringComparison.OrdinalIgnoreCase))
-                {
-                    Lic = Declare.PridajLomitko(Declare.AKT_ADRESAR); // budem kopírovať z tohto koreňa
-                }
+                #region Commented out code
+                //// 2) Pozri licenciu na inštalačkách (ak je v akt. adresári a nie je to istý adresár ako cieľ)
+                //string aktLicPath = Declare.PridajLomitko(Declare.AKT_ADRESAR) + Declare.LICENCIA;
+                //if (Declare.ExistujeSubor(aktLicPath) &&
+                //    !string.Equals(Declare.PridajLomitko(Declare.AKT_ADRESAR), Declare.DEST_PATH, StringComparison.OrdinalIgnoreCase))
+                //{
+                //    Lic = Declare.PridajLomitko(Declare.AKT_ADRESAR); // budem kopírovať z tohto koreňa
+                //}
 
-                //TODO Tato cast nikdy nepojde -> Mzdy.lic
-                // 3) Ak je licencia na inštalačkách, ide sa inštalovať „ostrá“
-                if (!string.IsNullOrEmpty(Lic))
-                {
-                    CitajRegistracnySubor(Declare.PCD_INSTALACKY, Lic);
+                ////TODO Tato cast nikdy nepojde -> Mzdy.lic
+                //// 3) Ak je licencia na inštalačkách, ide sa inštalovať „ostrá“
+                //if (!string.IsNullOrEmpty(Lic))
+                //{
+                //    CitajRegistracnySubor(Declare.PCD_INSTALACKY, Lic);
 
-                    if (Declare.VerziaPC != Declare.LIC_OSTRA)
-                    {
-                        // Nemá v PC ostrú verziu alebo na inštalačkách je novší licenčný súbor – kopíruj
-                        KopirujLICENCIU = true;
-                    }
-                    else
-                    {
-                        // V cieli je ostrá verzia
-                        if (Declare.ExistujeSubor(Path.Combine(Declare.DEST_PATH, Declare.LICENCIA_SW)))
-                        {
-                            // ak je v cieli nová licencia (SW), nekopíruj
-                            KopirujLICENCIU = false;
-                        }
-                        else
-                        {
-                            // Porovnaj licencie PC vs. Disketa – ak iné ICO/PorCislo a nie Install, pýtaj sa
-                            if ((Declare.ICO_Disketa != Declare.ICO_PC || Declare.PorCisloDisketa != Declare.PorCisloPC) &&
-                                !LicVSysteme &&
-                                Declare.KTO_VOLAL != Declare.VOLAL_INSTALL)
-                            {
-                                var res = MessageBox.Show(
-                                    "V cieľovom adresári sa nachádza ostrá verzia registrovaná na firmu " + Declare.NazovFirmyPC + "." +
-                                    Environment.NewLine + Environment.NewLine +
-                                    "Inštalácia obsahuje iný registračný súbor registrovaný na firmu " + Declare.NazovFirmyDisketa + "." +
-                                    Environment.NewLine + Environment.NewLine +
-                                    "Naozaj chcete inštaláciu spustiť?",
-                                    "OLYMP – inštalácia",
-                                    MessageBoxButtons.YesNo,
-                                    MessageBoxIcon.Question,
-                                    MessageBoxDefaultButton.Button2);
+                //    if (Declare.VerziaPC != Declare.LIC_OSTRA)
+                //    {
+                //        // Nemá v PC ostrú verziu alebo na inštalačkách je novší licenčný súbor – kopíruj
+                //        KopirujLICENCIU = true;
+                //    }
+                //    else
+                //    {
+                //        // V cieli je ostrá verzia
+                //        if (Declare.ExistujeSubor(Path.Combine(Declare.DEST_PATH, Declare.LICENCIA_SW)))
+                //        {
+                //            // ak je v cieli nová licencia (SW), nekopíruj
+                //            KopirujLICENCIU = false;
+                //        }
+                //        else
+                //        {
+                //            // Porovnaj licencie PC vs. Disketa – ak iné ICO/PorCislo a nie Install, pýtaj sa
+                //            if ((Declare.ICO_Disketa != Declare.ICO_PC || Declare.PorCisloDisketa != Declare.PorCisloPC) &&
+                //                !LicVSysteme &&
+                //                Declare.KTO_VOLAL != Declare.VOLAL_INSTALL)
+                //            {
+                //                var res = MessageBox.Show(
+                //                    "V cieľovom adresári sa nachádza ostrá verzia registrovaná na firmu " + Declare.NazovFirmyPC + "." +
+                //                    Environment.NewLine + Environment.NewLine +
+                //                    "Inštalácia obsahuje iný registračný súbor registrovaný na firmu " + Declare.NazovFirmyDisketa + "." +
+                //                    Environment.NewLine + Environment.NewLine +
+                //                    "Naozaj chcete inštaláciu spustiť?",
+                //                    "OLYMP – inštalácia",
+                //                    MessageBoxButtons.YesNo,
+                //                    MessageBoxIcon.Question,
+                //                    MessageBoxDefaultButton.Button2);
 
-                                if (res == DialogResult.No)
-                                {
-                                    Declare.ExitProg(0);
-                                    return;
-                                }
-                                KopirujLICENCIU = true;
-                            }
+                //                if (res == DialogResult.No)
+                //                {
+                //                    Declare.ExitProg(0);
+                //                    return;
+                //                }
+                //                KopirujLICENCIU = true;
+                //            }
 
-                            string destLic = Path.Combine(Declare.DEST_PATH, Declare.LICENCIA);
-                            if (Declare.ExistujeSubor(destLic))
-                            {
-                                // Má licenciu v počítači – kopíruj ak je staršia alebo rovnaká, alebo ak to prikázal InstallShield
-                                bool pcLeOrEqDisk =
-                                    IntYyyymmddToDate(Declare.DatumPC) <= IntYyyymmddToDate(Declare.DatumDisketa);
+                //            string destLic = Path.Combine(Declare.DEST_PATH, Declare.LICENCIA);
+                //            if (Declare.ExistujeSubor(destLic))
+                //            {
+                //                // Má licenciu v počítači – kopíruj ak je staršia alebo rovnaká, alebo ak to prikázal InstallShield
+                //                bool pcLeOrEqDisk =
+                //                    IntYyyymmddToDate(Declare.DatumPC) <= IntYyyymmddToDate(Declare.DatumDisketa);
 
-                                if (pcLeOrEqDisk || Declare.KOPIRUJ_LICENCIU == 1)
-                                {
-                                    KopirujLICENCIU = true;
-                                }
-                                else if (Declare.KOPIRUJ_LICENCIU == 2)
-                                {
-                                    KopirujLICENCIU = false;
-                                }
-                                else
-                                {
-                                    // Na inštalačkách je starší lic. súbor – opýtať sa na prepis
-                                    var res2 = MessageBox.Show(
-                                        "Inštalačný program sa chystá skopírovať súbor " + Declare.LICENCIA + " z inštalačného média do počítača." +
-                                        Environment.NewLine + Environment.NewLine +
-                                        "Súbor " + Declare.LICENCIA + " na inštalačnom médiu je ale starší ako ten, ktorý máte v počítači." + Environment.NewLine +
-                                        "Prepísať existujúci súbor " + Declare.LICENCIA + " (" + FormatDdMmYyyy(Declare.DatumPC) + ") " +
-                                        "starším súborom " + Declare.LICENCIA + " (" + FormatDdMmYyyy(Declare.DatumDisketa) + ") z inštalačného média?",
-                                        "OLYMP – inštalácia",
-                                        MessageBoxButtons.YesNo,
-                                        MessageBoxIcon.Question,
-                                        MessageBoxDefaultButton.Button2);
+                //                if (pcLeOrEqDisk || Declare.KOPIRUJ_LICENCIU == 1)
+                //                {
+                //                    KopirujLICENCIU = true;
+                //                }
+                //                else if (Declare.KOPIRUJ_LICENCIU == 2)
+                //                {
+                //                    KopirujLICENCIU = false;
+                //                }
+                //                else
+                //                {
+                //                    // Na inštalačkách je starší lic. súbor – opýtať sa na prepis
+                //                    var res2 = MessageBox.Show(
+                //                        "Inštalačný program sa chystá skopírovať súbor " + Declare.LICENCIA + " z inštalačného média do počítača." +
+                //                        Environment.NewLine + Environment.NewLine +
+                //                        "Súbor " + Declare.LICENCIA + " na inštalačnom médiu je ale starší ako ten, ktorý máte v počítači." + Environment.NewLine +
+                //                        "Prepísať existujúci súbor " + Declare.LICENCIA + " (" + FormatDdMmYyyy(Declare.DatumPC) + ") " +
+                //                        "starším súborom " + Declare.LICENCIA + " (" + FormatDdMmYyyy(Declare.DatumDisketa) + ") z inštalačného média?",
+                //                        "OLYMP – inštalácia",
+                //                        MessageBoxButtons.YesNo,
+                //                        MessageBoxIcon.Question,
+                //                        MessageBoxDefaultButton.Button2);
 
-                                    KopirujLICENCIU = (res2 == DialogResult.Yes);
-                                }
-                            }
-                            else
-                            {
-                                // Licencia bola len v systéme → kopíruj „naisto“
-                                KopirujLICENCIU = true;
-                            }
-                        }
-                    }
+                //                    KopirujLICENCIU = (res2 == DialogResult.Yes);
+                //                }
+                //            }
+                //            else
+                //            {
+                //                // Licencia bola len v systéme → kopíruj „naisto“
+                //                KopirujLICENCIU = true;
+                //            }
+                //        }
+                //    }
 
-                    // 4) Kopírovanie licencie (ak treba)
-                    if (KopirujLICENCIU)
-                    {
-                        string destLic = Path.Combine(Declare.DEST_PATH, Declare.LICENCIA);
-                        string srcLic = Path.Combine(Lic, Declare.LICENCIA);
+                //    // 4) Kopírovanie licencie (ak treba)
+                //    if (KopirujLICENCIU)
+                //    {
+                //        string destLic = Path.Combine(Declare.DEST_PATH, Declare.LICENCIA);
+                //        string srcLic = Path.Combine(Lic, Declare.LICENCIA);
 
-                        try
-                        {
-                            if (File.Exists(destLic))
-                            {
-                                File.SetAttributes(destLic, FileAttributes.Normal);
-                                File.Delete(destLic);
-                            }
-                        }
-                        catch { }
+                //        try
+                //        {
+                //            if (File.Exists(destLic))
+                //            {
+                //                File.SetAttributes(destLic, FileAttributes.Normal);
+                //                File.Delete(destLic);
+                //            }
+                //        }
+                //        catch { }
 
-                        File.Copy(srcLic, destLic, overwrite: false);
+                //        File.Copy(srcLic, destLic, overwrite: false);
 
-                        try
-                        {
-                            File.SetAttributes(destLic, FileAttributes.ReadOnly);
-                        }
-                        catch { }
+                //        try
+                //        {
+                //            File.SetAttributes(destLic, FileAttributes.ReadOnly);
+                //        }
+                //        catch { }
 
-                        MaOstruVerziu = true;
-                        Declare.DatumPC = Declare.DatumDisketa;
-                    }
-                }
+                //        MaOstruVerziu = true;
+                //        Declare.DatumPC = Declare.DatumDisketa;
+                //    }
+                //}
+                #endregion Commented out code
 
                 ProgresiaTik();
 
@@ -1729,9 +1803,9 @@ namespace OlympUpgrade
 
                 ProgresiaDone();
             }
-            catch
+            catch (Exception ex)
             {
-                // chyba:
+                Declare.Errors.Add(ex.ToString());
                 Declare.ExitProg(Declare.ID_CHYBA_LICENCIA);
             }
         }
@@ -1754,6 +1828,8 @@ namespace OlympUpgrade
 
         public void ProgresiaTik()
         {
+            //Thread.Sleep(1);//iba kvoli tomu, aby to neprefrcalo tak rychlo
+
             _AktTik++;
             var val = (int)Math.Floor(_AktTik * _PocetNaTik);
 
@@ -2317,8 +2393,9 @@ namespace OlympUpgrade
 
                 return true;
             }
-            catch (Exception) //TODO Logger
+            catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 return false;
             }
             finally { TryToDeleteFile(verzieTxtPath); }
@@ -2344,8 +2421,9 @@ namespace OlympUpgrade
                 else
                     return string.Empty;
             }
-            catch
+            catch (Exception ex)
             {
+                Declare.Errors.Add(ex.ToString());
                 TryToDeleteFile(resFilePath);
                 return string.Empty;
             }
@@ -2359,7 +2437,7 @@ namespace OlympUpgrade
                     && File.Exists(filePath))
                     File.Delete(filePath);
             }
-            catch { /*TODO ???*/ }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
         }
 
         private void HideTabs()
@@ -2407,7 +2485,7 @@ namespace OlympUpgrade
                 btnOk.Visible = false;
                 lblInfo.Text =
                     "Inštalácia prebehla s chybami. Pokúste sa tieto chyby odstrániť a potom spustite program " +
-                    Path.Combine(Declare.AKT_ADRESAR ?? string.Empty, Declare.MENO_EXE ?? string.Empty) + " znova. " +
+                    /*Path.Combine(Declare.AKT_ADRESAR ?? string.Empty, Declare.MENO_EXE ?? string.Empty) +*/ " znova. " +
                     "Ak sa vyskytla chyba typu \"nedá sa prepísať\", príčinou môže byť to, že je súbor " +
                     "otvorený alebo spustený. V tomto prípade musíte súbor zavrieť alebo ukončiť.";
                 lblInfo.Visible = true;
@@ -2425,7 +2503,6 @@ namespace OlympUpgrade
         /// <returns></returns>
         private bool CheckAcrobatAndInstall()
         {
-            Declare.RESTARTUJ = false;
             if (Declare.KTO_VOLAL != Declare.VOLAL_INSTALL) return false;
 
             string basePath = Declare.DajCestuOXAdresarovVyssie(Declare.AKT_ADRESAR, 3);
@@ -2458,5 +2535,6 @@ namespace OlympUpgrade
         }
 
         #endregion Methods
+
     }
 }

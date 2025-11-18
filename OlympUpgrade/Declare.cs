@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Security.AccessControl;
@@ -9,23 +10,41 @@ namespace OlympUpgrade
 {
     internal class Declare
     {
+        public static List<string> Errors = new List<string>();
+
+        public const string URL_KROS = "https://www.kros.sk/";
+
         public const string PRODUCT_CODE_1 = "{38BB475B-CE35-4D84-8261-7FF5705CC4F4}";  // 13.30
-        public const string REG_PRODUCT_CODE_1 = "B574BB8353EC48D42816F75F07C54C4F";
+        //public const string REG_PRODUCT_CODE_1 = "B574BB8353EC48D42816F75F07C54C4F";
         public const string PRODUCT_CODE_2 = "{E632280B-3D7A-41B5-8F20-79895AFFAC3F}";  // 15.00
         public const string REG_PRODUCT_CODE_2 = "B082236EA7D35B14F8029798A5FFCAF3";
 
+        /// <summary>
+        /// Ci sa bude musiet restartovat, alebo nie, predava sa to ako druhy parameter pri spustani
+        /// </summary>
+        public static bool RESTARTUJ;
 
-        public static bool RESTARTUJ;  // ci sa bude musiet restartovat, alebo nie, predava sa to ako druhy parameter pri spustani
+        /// <summary>
+        /// parameter, s ktorym sa program pusta pri installshielde
+        /// </summary>
+        public const string PARAMETER_INSTAL = "zInstalu";
 
-        public const string PARAMETER_INSTAL = "zInstalu";               // parameter, s ktorym sa program pusta pri installshielde
+        //public const string PARAMETER_OLYMP = "zOlympu";                 // parameter, s ktorym sa upgrade spusta z Olympu
 
-        public const string PARAMETER_OLYMP = "zOlympu";                 // parameter, s ktorym sa upgrade spusta z Olympu
+        /// <summary>
+        /// program spustil installshield
+        /// </summary>
+        public const int VOLAL_INSTALL = 1;
 
-        public const int VOLAL_INSTALL = 1;              // program spustil installshield
+        /// <summary>
+        /// program spustil uzivatel
+        /// </summary>
+        public const int VOLAL_UZIVATEL = 2;
 
-        public const int VOLAL_UZIVATEL = 2;             // program spustil uzivatel
-
-        public const int VOLAL_OLYMP = 3;                // program sa spustil automaticky
+        /// <summary>
+        /// program sa spustil automaticky
+        /// </summary>
+        public const int VOLAL_OLYMP = 3;
 
         public const string VERZIA_NEZNAMA = "(Nedefinované)";
 
@@ -65,7 +84,7 @@ namespace OlympUpgrade
 
         public const string FILE_REPORTY_TXT = "reporty.txt";
 
-        public const string FILE_REPORTY_DEVEXPRES_TXT = "reportyDX.txt";
+        //public const string FILE_REPORTY_DEVEXPRES_TXT = "reportyDX.txt";
 
         public const string FILE_REPORTY_PDF_TXT = "pdf.txt";
 
@@ -91,7 +110,6 @@ namespace OlympUpgrade
         public static int P_MINOR;
         public static int P_REVISION;
 
-
         public static int N_CRV2_MAJOR;
         public static int N_CRV2_MINOR;
         public static int N_CRV2_REVISION;
@@ -102,58 +120,52 @@ namespace OlympUpgrade
         public static int VNUTORNY_DATUM_MESIAC;
         public static int VNUTORNY_DATUM_ROK;
 
+        /// <summary>
+        /// O AKY TYP INSTALACIE SA JEDNA NA INSTALACKACH; 0=demo,  1=ostra, 2=upgrate
+        /// </summary>
+        public static int VerziaDisketa;
 
-        public static int VerziaDisketa;                       // O AKY TYP INSTALACIE SA JEDNA NA INSTALACKACH; 0=demo,  1=ostra, 2=upgrate
+        /// <summary>
+        /// AKY TYP INSTALACIE JE NA POCITACI; 0=demo,  1=ostra, -1=ostra chybny .reg, 2=nic
+        /// </summary>
+        public static int VerziaPC;
 
-        public static int VerziaPC;                               // AKY TYP INSTALACIE JE NA POCITACI; 0=demo,  1=ostra, -1=ostra chybny .reg, 2=nic
+        /// <summary>
+        /// zakodovany datum registracie z instalacnych diskiet /RRRRMMDD
+        /// </summary>
+        public static long DatumDisketa;
 
-        public static long DatumDisketa;      // zakodovany datum registracie z instalacnych diskiet /RRRRMMDD
+        /// <summary>
+        /// zakodovany datum registracie z PC /RRRRMMDD
+        /// </summary>
+        public static long DatumPC;
 
-        public static long DatumPC;              // zakodovany datum registracie z PC /RRRRMMDD
-
-        public static int mojTag;
+        //public static int mojTag;
 
         public static string NazovFirmyDisketa;
 
-        public static string ICO_Disketa;  // ico na krotu firmu je registrovana na diskete
+        /// <summary>
+        /// ico na krotu firmu je registrovana na diskete
+        /// </summary>
+        public static string ICO_Disketa;
 
-        public static string PorCisloDisketa;  // poradove cislo registracie na diskete _
+        /// <summary>
+        /// poradove cislo registracie na diskete _
+        /// </summary>
+        public static string PorCisloDisketa;
 
         public static string NazovFirmyPC;
 
-        public static string ICO_PC;  // ico na krotu firmu je registrovana na diskete
+        /// <summary>
+        /// ico na krotu firmu je registrovana na diskete
+        /// </summary>
+        public static string ICO_PC;
 
-        public static string PorCisloPC;  // poradove cislo registracie na diskete _
+        /// <summary>
+        /// poradove cislo registracie na diskete _
+        /// </summary>
+        public static string PorCisloPC;
 
-        public const int ID_REZIM_ZIP_VELKOST = 1;       // zistovanie velkosti
-
-        public const int ID_REZIM_ZIP_VERZIA = 2;        // zistovanie verzie
-
-        public const int ID_REZIM_ZIP_KOPIROVANIE = 3;   // kopirovanie
-
-        public const int ID_REZIM_ZIP_TESTOVANIE = 4;    // pri testovani
-
-        public const int ID_REZIM_ZIP_OB_FA = 5;         // pri testovani, ked chcem vylucit REPORT\OB_FA*.RPT
-
-        public const int ID_REZIM_ZIP_POM_TEST = 6;      // pri testovani, kvoli zisteniu suborov, ktore neboli nakopirovane, kvoli chybe - neda sa prepisat
-
-        // chyby zipu pri extract
-
-        public const int xsrFileNotFound = 0;
-
-        public const int xsrBadVersion = 1;
-
-        public const int xsrBadCRC = 2;
-
-        public const int xsrUpToDate = 3;
-
-        public const int xsrUnableToOpen = 4;
-
-        public const int xsrBadPassword = 5;
-
-        public const int xsrBadData = 6;
-
-        public const int xsrOverwrite = 7;
 
         // identifikatory chyb
 
@@ -169,23 +181,39 @@ namespace OlympUpgrade
 
         public const int ID_CHYBA_CHYBA_FRAMEWORK = 6;
 
-        public static int KTO_VOLAL;   // kto volal tento porgram
-        public static string DEST_PATH;    // cielovy adresar instalacie
-        public static string DEST_PATH_INSTALLSHIELD;  // adresar, kde bola nainstalovana prvy krat alfa z installshieldu
-        public static string COMMAND_LINE_ARGUMENT;    // parameter, s ktorym sa program spustil
-        public static int REZIM_ZIP;   // rezim zip, vyuziva sa pri udalostiach zipu
-                                       // 0 - pytaj sa, 1 kopci, 2 nekopici
+        /// <summary>
+        /// kto volal tento porgram
+        /// </summary>
+        public static int KTO_VOLAL;
 
-        public static int KOPIRUJ_LICENCIU;  // parameter z instalshieldu, ci sa ma lic skopcit alebo nie, ak je daky konflikt
+        /// <summary>
+        /// cielovy adresar instalacie
+        /// </summary>
+        public static string DEST_PATH;
+
+        /// <summary>
+        /// adresar, kde bola nainstalovana prvy krat alfa z installshieldu
+        /// </summary>
+        public static string DEST_PATH_INSTALLSHIELD;
+
+        /// <summary>
+        /// parameter, s ktorym sa program spustil
+        /// </summary>
+        public static string COMMAND_LINE_ARGUMENT;
+
+        /// <summary>
+        /// parameter z instalshieldu, ci sa ma lic skopcit alebo nie, ak je daky konflikt
+        /// </summary>
+        public static int KOPIRUJ_LICENCIU;
 
 
         public const int PCD_POCITAC = 0;
         public const int PCD_INSTALACKY = 1;
 
-        public const int LIC_CHYBNA = -1;
+        //public const int LIC_CHYBNA = -1;
         public const int LIC_NEEXISTUJE = 0;
         public const int LIC_OSTRA = 1;
-        public const int LIC_UPDATE = 2;
+        //public const int LIC_UPDATE = 2;
 
         public static bool ZmazHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky)
         {
@@ -201,7 +229,11 @@ namespace OlympUpgrade
                 }
                 return false;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString());
+                return false;
+            }
         }
 
         /// <summary>
@@ -227,24 +259,28 @@ namespace OlympUpgrade
                 }
                 return false;
             }
-            catch { return false; }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); return false; }
         }
 
         public static bool Vytvor_kluc(RegistryKey skupina_kluca, string meno_kluca)
         {
-            //try
+            try
             {
                 using (RegistryKey hKey = skupina_kluca.CreateSubKey(meno_kluca, RegistryKeyPermissionCheck.ReadWriteSubTree))
                 {
                     return hKey == null ? false : true;
                 }
             }
-            //catch { return; } TODO ???
+           catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString());
+                return false;
+            }
         }
 
         public static void ZapisHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky, string hodnota_polozky)//object hodnota_polozky, int typ_polozky)
         {
-            //try
+            try
             {
                 using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, true))
                 {
@@ -254,26 +290,11 @@ namespace OlympUpgrade
                     hKey.SetValue(meno_polozky, hodnota_polozky, RegistryValueKind.String);
                 }
             }
-            //catch { return; } TODO ???
+           catch( Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString());
+            }
         }
-
-
-        //public static RegistryValueKind? MapKind(int typ)
-        //{
-        //    switch (typ)
-        //    {
-        //        case 0: return RegistryValueKind.None;
-        //        case 1: return RegistryValueKind.String;
-        //        case 2: return RegistryValueKind.ExpandString;
-        //        case 3: return RegistryValueKind.Binary;
-        //        case 4: return RegistryValueKind.DWord;
-        //        case 7: return RegistryValueKind.MultiString;
-        //        case 11: return RegistryValueKind.QWord;
-        //        case 5: return null; // REG_DWORD_BE not supported by.NET API
-        //        default: return null;
-        //    }
-        //}
-
 
         public static bool ExistujeKlucReg(RegistryKey skupina_kluca, string meno_kluca)
         {
@@ -282,10 +303,8 @@ namespace OlympUpgrade
                 using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, RegistryRights.QueryValues))
                     return hKey != null;
             }
-            catch { return false; }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); return false; }
         }
-
-
 
         public static bool MamDostatocnyFramework()
         {
@@ -327,7 +346,7 @@ namespace OlympUpgrade
             {
                 return File.Exists(meno);
             }
-            catch { return false; }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); return false; }
         }
 
         /// <summary>
@@ -464,8 +483,9 @@ namespace OlympUpgrade
 
                 return true;
             }
-            catch
+            catch (Exception ex) 
             {
+                Declare.Errors.Add(ex.ToString());
                 return false;
             }
             finally
@@ -553,9 +573,14 @@ namespace OlympUpgrade
             return (j == pocet) ? cesta : string.Empty;
         }
 
+        /// <summary>
+        /// 0 - nie je nainstalovany
+        ///-1 - je nainstalovany acrobat reader
+        /// 1 - je nainstalovany acrobat (aj writer)
+        /// </summary>
+        /// <returns></returns>
         public static int IsAcrobatReaderInstalled()
         {
-            // default hodnota ("") v App Paths
             if (CitajHodnotuReg(Registry.LocalMachine,
                                     @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACRORD32.EXE",
                                     "",
@@ -588,7 +613,11 @@ namespace OlympUpgrade
 
                 return true;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString());
+                return false;
+            }
         }
 
         public static long DiskSpaceKB(string path)
