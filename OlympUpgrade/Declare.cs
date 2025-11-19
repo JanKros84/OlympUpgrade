@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Security.AccessControl;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace OlympUpgrade
 {
@@ -231,7 +232,7 @@ namespace OlympUpgrade
             }
             catch (Exception ex)
             {
-                Declare.Errors.Add(ex.ToString());
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}\r\nmeno_polozky: {meno_polozky}");
                 return false;
             }
         }
@@ -259,7 +260,11 @@ namespace OlympUpgrade
                 }
                 return false;
             }
-            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); return false; }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}\r\nmeno_polozky: {meno_polozky}");
+                return false;
+            }
         }
 
         public static bool Vytvor_kluc(RegistryKey skupina_kluca, string meno_kluca)
@@ -271,9 +276,9 @@ namespace OlympUpgrade
                     return hKey == null ? false : true;
                 }
             }
-           catch (Exception ex)
+            catch (Exception ex)
             {
-                Declare.Errors.Add(ex.ToString());
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}");
                 return false;
             }
         }
@@ -290,9 +295,9 @@ namespace OlympUpgrade
                     hKey.SetValue(meno_polozky, hodnota_polozky, RegistryValueKind.String);
                 }
             }
-           catch( Exception ex)
+            catch (Exception ex)
             {
-                Declare.Errors.Add(ex.ToString());
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}\r\nmeno_polozky: {meno_polozky}\r\nhodnota_polozky: {hodnota_polozky}");
             }
         }
 
@@ -303,7 +308,7 @@ namespace OlympUpgrade
                 using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, RegistryRights.QueryValues))
                     return hKey != null;
             }
-            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); return false; }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}"); return false; }
         }
 
         public static bool MamDostatocnyFramework()
@@ -346,7 +351,7 @@ namespace OlympUpgrade
             {
                 return File.Exists(meno);
             }
-            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); return false; }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString() + $"\r\nmeno: {meno}"); return false; }
         }
 
         /// <summary>
@@ -483,9 +488,9 @@ namespace OlympUpgrade
 
                 return true;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                Declare.Errors.Add(ex.ToString());
+                Declare.Errors.Add(ex.ToString() + $"\r\npath: {path}");
                 return false;
             }
             finally

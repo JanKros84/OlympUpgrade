@@ -954,11 +954,11 @@ namespace OlympUpgrade
                     catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
 
                     // --- rozbal systémové reporty podľa listov ---
-                    RozbalZostavy(zip, "Reporty\\", "\\.RPT", Declare.FILE_REPORTY_TXT);
-                    RozbalZostavy(zip, "Reporty\\", "\\.REPX", Declare.FILE_REPORTY_TXT);
-                    RozbalZostavy(zip, "Reporty\\Excel\\", "\\.XLS", Declare.FILE_REPORTY_EXCEL_TXT);
-                    RozbalZostavy(zip, "Reporty\\Excel\\", "\\.PDF", Declare.FILE_REPORTY_EXCEL_P_TXT);
-                    RozbalZostavy(zip, "Reporty\\Pdf\\", "\\.PDF", Declare.FILE_REPORTY_PDF_TXT);
+                    RozbalZostavy(zip, "Reporty\\", "\\.rpt", Declare.FILE_REPORTY_TXT);
+                    RozbalZostavy(zip, "Reporty\\", "\\.repx", Declare.FILE_REPORTY_TXT);
+                    RozbalZostavy(zip, "Reporty\\Excel\\", "\\.xls", Declare.FILE_REPORTY_EXCEL_TXT);
+                    RozbalZostavy(zip, "Reporty\\Excel\\", "\\.pdf", Declare.FILE_REPORTY_EXCEL_P_TXT);
+                    RozbalZostavy(zip, "Reporty\\Pdf\\", "\\.pdf", Declare.FILE_REPORTY_PDF_TXT);
 
 
                     // --- GRAFIKA\*.*  ---
