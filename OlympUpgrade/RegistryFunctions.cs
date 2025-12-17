@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Security.AccessControl;
 
 namespace OlympUpgrade
 {
@@ -10,7 +11,7 @@ namespace OlympUpgrade
         /// </summary>
         public static void OdstranZRegistrovDoinstalovanie()
         {
-            RegistryOperation.ZmazHodnotuReg(Registry.CurrentUser/*Declare.HKEY_CURRENT_USER*/, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", "krosOlymp");
+            ZmazHodnotuReg(Registry.CurrentUser/*Declare.HKEY_CURRENT_USER*/, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", "krosOlymp");
 
             if (Declare.RESTARTUJ)
                 Declare.RESTARTUJ = false;
@@ -27,7 +28,7 @@ namespace OlympUpgrade
                 ? "Vyplaty" + kodovanie.VratIDRegistracky(Declare.ICO_Disketa, Declare.PorCisloDisketa)
                 : string.Empty;
 
-            if (RegistryOperation.CitajHodnotuReg(Registry.LocalMachine,
+            if (CitajHodnotuReg(Registry.LocalMachine,
                                $@"Software\Kros\Olymp\{postKey}",
                                "InstalacnyAdresar",
                                out object val))
@@ -51,7 +52,7 @@ namespace OlympUpgrade
             var nacital = false;
             foreach (var productCode in new[] { Declare.PRODUCT_CODE_1, Declare.PRODUCT_CODE_2 })
             {
-                if (RegistryOperation.CitajHodnotuReg(Registry.LocalMachine,
+                if (CitajHodnotuReg(Registry.LocalMachine,
                                     $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{productCode}",
                                     "InstallLocation",
                                     out object val))
@@ -78,9 +79,9 @@ namespace OlympUpgrade
                 string ProductCode = Declare.PRODUCT_CODE_2;
 
                 //zobrazovane v add/remove
-                if (RegistryOperation.ExistujeKlucReg(Registry.ClassesRoot, $@"Installer\Products\{RegProductCode}"))
+                if (ExistujeKlucReg(Registry.ClassesRoot, $@"Installer\Products\{RegProductCode}"))
                 {
-                    RegistryOperation.ZapisHodnotuReg(
+                    ZapisHodnotuReg(
                         Registry.ClassesRoot,
                         $@"Installer\Products\{RegProductCode}",
                         "ProductName",
@@ -90,9 +91,9 @@ namespace OlympUpgrade
                 //MessageBox.Show("BEFORE reg OLYMP22 S-1-5-18");
                 //zobrazovane v MSI pri instalacii vyssej verzie
                 string installProps = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\{RegProductCode}\InstallProperties";
-                if (RegistryOperation.ExistujeKlucReg(Registry.LocalMachine, installProps))
+                if (ExistujeKlucReg(Registry.LocalMachine, installProps))
                 {
-                    RegistryOperation.ZapisHodnotuReg(
+                    ZapisHodnotuReg(
                         Registry.LocalMachine,
                         installProps,
                         "DisplayName",
@@ -102,15 +103,15 @@ namespace OlympUpgrade
                 }
 
                 string uninstallKey = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode}";
-                if (RegistryOperation.ExistujeKlucReg(Registry.LocalMachine, uninstallKey))
+                if (ExistujeKlucReg(Registry.LocalMachine, uninstallKey))
                 {
-                    RegistryOperation.ZapisHodnotuReg(
+                    ZapisHodnotuReg(
                         Registry.LocalMachine,
                         uninstallKey,
                         "DisplayName",
                         $"OLYMP {HelpFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
 
-                    RegistryOperation.ZapisHodnotuReg(
+                    ZapisHodnotuReg(
                        Registry.LocalMachine,
                         uninstallKey,
                         "DisplayVersion",
@@ -125,10 +126,10 @@ namespace OlympUpgrade
                 Declare.PorCisloPC = Declare.PorCisloDisketa;
             }
 
-            RegistryOperation.Vytvor_kluc(Registry.LocalMachine, @"Software\Kros\Olymp");
-            if (RegistryOperation.ExistujeKlucReg(Registry.LocalMachine, @"Software\Kros\Olymp"))
+            Vytvor_kluc(Registry.LocalMachine, @"Software\Kros\Olymp");
+            if (ExistujeKlucReg(Registry.LocalMachine, @"Software\Kros\Olymp"))
             {
-                RegistryOperation.ZapisHodnotuReg(
+                ZapisHodnotuReg(
                        Registry.LocalMachine,
                         @"Software\Kros\Olymp",
                         "InstalacnyAdresar",
@@ -140,12 +141,12 @@ namespace OlympUpgrade
             {
                 string pomCesta = $@"Software\Kros\Olymp\Vyplaty{kodovanie.VratIDRegistracky(Declare.ICO_PC, Declare.PorCisloPC)}";
 
-                if (!RegistryOperation.ExistujeKlucReg(Registry.LocalMachine, pomCesta))
-                    RegistryOperation.Vytvor_kluc(Registry.LocalMachine, pomCesta);
+                if (!ExistujeKlucReg(Registry.LocalMachine, pomCesta))
+                    Vytvor_kluc(Registry.LocalMachine, pomCesta);
 
-                if (RegistryOperation.ExistujeKlucReg(Registry.LocalMachine, pomCesta))
+                if (ExistujeKlucReg(Registry.LocalMachine, pomCesta))
                 {
-                    RegistryOperation.ZapisHodnotuReg(
+                    ZapisHodnotuReg(
                       Registry.LocalMachine,
                         pomCesta,
                         "InstalacnyAdresar",
@@ -162,13 +163,13 @@ namespace OlympUpgrade
         /// <returns></returns>
         public static int IsAcrobatReaderInstalled()
         {
-            if (RegistryOperation.CitajHodnotuReg(Registry.LocalMachine,
+            if (CitajHodnotuReg(Registry.LocalMachine,
                                     @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACRORD32.EXE",
                                     "",
                                     out object _))
                 return -1;
 
-            if (RegistryOperation.CitajHodnotuReg(Registry.LocalMachine,
+            if (CitajHodnotuReg(Registry.LocalMachine,
                                     @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACROBAT.EXE",
                                     "",
                                     out object _))
@@ -183,7 +184,7 @@ namespace OlympUpgrade
         /// <returns></returns>
         public static bool MamDostatocnyFramework()
         {
-            if (RegistryOperation.CitajHodnotuReg(Registry.LocalMachine,
+            if (CitajHodnotuReg(Registry.LocalMachine,
                                     @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full",
                                     "Release",
                                     out object val))
@@ -195,5 +196,104 @@ namespace OlympUpgrade
 
             return false;
         }
+
+        #region RegistriOperations
+
+        private static bool ZmazHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky)
+        {
+            try
+            {
+                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, true))//RegistryRights.Delete))//FullControl))
+                {
+                    if (hKey != null)
+                    {
+                        hKey.DeleteValue(meno_polozky);//, false);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}\r\nmeno_polozky: {meno_polozky}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// cita hodnotu z registrov - vysledna precitana hodnota je vo vystup
+        /// </summary>
+        /// <param name="skupina_kluca"></param>
+        /// <param name="meno_kluca"></param>
+        /// <param name="meno_polozky"></param>
+        /// <param name="vystup">out value</param>
+        /// <returns></returns>
+        private static bool CitajHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky, out object vystup)
+        {
+            vystup = null;
+            try
+            {
+                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, RegistryRights.QueryValues))
+                {
+                    if (hKey != null)
+                    {
+                        vystup = hKey.GetValue(meno_polozky);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}\r\nmeno_polozky: {meno_polozky}");
+                return false;
+            }
+        }
+
+        private static bool Vytvor_kluc(RegistryKey skupina_kluca, string meno_kluca)
+        {
+            try
+            {
+                using (RegistryKey hKey = skupina_kluca.CreateSubKey(meno_kluca, RegistryKeyPermissionCheck.ReadWriteSubTree))
+                {
+                    return hKey == null ? false : true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}");
+                return false;
+            }
+        }
+
+        private static void ZapisHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky, string hodnota_polozky)//object hodnota_polozky, int typ_polozky)
+        {
+            try
+            {
+                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, true))
+                {
+                    if (hKey == null)
+                        return;// ERROR_FILE_NOT_FOUND;
+
+                    hKey.SetValue(meno_polozky, hodnota_polozky, RegistryValueKind.String);
+                }
+            }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}\r\nmeno_polozky: {meno_polozky}\r\nhodnota_polozky: {hodnota_polozky}");
+            }
+        }
+
+        private static bool ExistujeKlucReg(RegistryKey skupina_kluca, string meno_kluca)
+        {
+            try
+            {
+                using (RegistryKey hKey = skupina_kluca.OpenSubKey(meno_kluca, RegistryRights.QueryValues))
+                    return hKey != null;
+            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString() + $"\r\nskupina_kluca: {skupina_kluca.Name}\r\nmeno_kluca: {meno_kluca}"); return false; }
+        }
+
+        #endregion RegistriOperations
     }
 }

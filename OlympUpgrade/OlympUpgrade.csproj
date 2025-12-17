@@ -69,7 +69,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegistryFunctions.cs" />
-    <Compile Include="RegistryOperation.cs" />
     <EmbeddedResource Include="OlympUpgrade.resx">
       <DependentUpon>OlympUpgrade.cs</DependentUpon>
     </EmbeddedResource>
