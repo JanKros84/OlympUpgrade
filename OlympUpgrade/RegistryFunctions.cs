@@ -25,7 +25,7 @@ namespace OlympUpgrade
         {
             string path = string.Empty;
             var postKey = Declare.VerziaDisketa == Declare.LIC_OSTRA
-                ? "Vyplaty" + kodovanie.VratIDRegistracky(Declare.ICO_Disketa, Declare.PorCisloDisketa)
+                ? "Vyplaty" + Kodovanie.VratIDRegistracky(Declare.ICO_Disketa, Declare.PorCisloDisketa)
                 : string.Empty;
 
             if (CitajHodnotuReg(Registry.LocalMachine,
@@ -139,7 +139,7 @@ namespace OlympUpgrade
             if ((Declare.VerziaPC == Declare.LIC_OSTRA || Declare.VerziaDisketa == Declare.LIC_OSTRA)
                 && Declare.VerziaDisketa != Declare.LIC_NEEXISTUJE)
             {
-                string pomCesta = $@"Software\Kros\Olymp\Vyplaty{kodovanie.VratIDRegistracky(Declare.ICO_PC, Declare.PorCisloPC)}";
+                string pomCesta = $@"Software\Kros\Olymp\Vyplaty{Kodovanie.VratIDRegistracky(Declare.ICO_PC, Declare.PorCisloPC)}";
 
                 if (!ExistujeKlucReg(Registry.LocalMachine, pomCesta))
                     Vytvor_kluc(Registry.LocalMachine, pomCesta);

@@ -7,6 +7,37 @@ namespace OlympUpgrade
 {
     internal class HelpFunctions
     {
+
+        /// <summary>
+        /// Vrati verziu .exe
+        /// </summary>
+        /// <returns></returns>
+        public static string DajVerziuProgramu()
+        {
+            var pathExe = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_EXE);
+            var pathExeStary = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_EXE_STARY);
+
+            if (File.Exists(pathExe))
+            {
+                HelpFunctions.DajVerziuExe(pathExe, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
+                if (Declare.P_MAJOR == 0)
+                    return Declare.VERZIA_NEZNAMA;
+                else
+                    return HelpFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
+            }
+            else if (File.Exists(pathExeStary))
+            {
+                HelpFunctions.DajVerziuExe(pathExeStary, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
+                if (Declare.P_MAJOR == 0)
+                    return Declare.VERZIA_NEZNAMA;
+                else
+                    return HelpFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
+            }
+
+            Declare.P_MAJOR = 0;
+            return Declare.VERZIA_NEZNAMA;
+        }
+
         public static DateTime IntYyyymmddToDate(long ymd) =>
             new DateTime((int)ymd / 10000, (int)(ymd / 100) % 100, (int)ymd % 100);
 

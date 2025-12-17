@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Security.AccessControl;
+using System.Text;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
@@ -11,6 +12,8 @@ namespace OlympUpgrade
 {
     internal class Declare
     {
+        public static readonly Encoding ZipEncoding = Encoding.GetEncoding(437); //Z Creatora -> DotNetZip (Ionic.Zip) v1.9.1.8 default IBM437. Funguje aj s 852/850
+
         public static List<string> Errors = new List<string>();
 
         public const string URL_KROS = "https://www.kros.sk/";
