@@ -59,8 +59,9 @@
   <ItemGroup>
     <Compile Include="CopyUpgradeFilesManager.cs" />
     <Compile Include="Declare.cs" />
-    <Compile Include="HelpFunctions.cs" />
-    <Compile Include="Kodovanie.cs" />
+    <Compile Include="Functions\HelpFunctions.cs" />
+    <Compile Include="Functions\CodingFunctions.cs" />
+    <Compile Include="Functions\LicenseVersionFunctions.cs" />
     <Compile Include="OlympUpgrade.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -69,7 +70,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RegistryFunctions.cs" />
+    <Compile Include="Functions\RegistryFunctions.cs" />
     <EmbeddedResource Include="OlympUpgrade.resx">
       <DependentUpon>OlympUpgrade.cs</DependentUpon>
     </EmbeddedResource>

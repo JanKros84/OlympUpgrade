@@ -390,13 +390,13 @@ namespace OlympUpgrade
                 if (!string.Equals(Declare.DEST_PATH, Declare.DEST_PATH_NEZNAMY, StringComparison.OrdinalIgnoreCase) && Declare.MAJOR == 0)
                 {
                     lblUpgrade.Text = DajVerziuUpgrade();
-                    lblExe.Text = HelpFunctions.DajVerziuProgramu();
+                    lblExe.Text = LicenseVersionFunctions.DajVerziuProgramu();
                     btnOk.Enabled = true;
                     this.Text = $"OLYMP {lblUpgrade.Text} - Sprievodca inštaláciou";
                 }
                 else
                 {
-                    lblExe.Text = HelpFunctions.DajVerziuProgramu();
+                    lblExe.Text = LicenseVersionFunctions.DajVerziuProgramu();
                 }
             }
             catch (Exception ex)
@@ -875,7 +875,7 @@ namespace OlympUpgrade
             try
             {
                 // 1) Zisti „ostrú verziu“ v PC (a pri tom načítaj dátumy z licenčného súboru)
-                CitajRegistracnySubor(Declare.PCD_POCITAC, Declare.DEST_PATH);
+                LicenseVersionFunctions.CitajRegistracnySubor(Declare.PCD_POCITAC, Declare.DEST_PATH);
                 MaOstruVerziu = (Declare.VerziaPC == Declare.LIC_OSTRA);
 
                 ProgresiaTik();
@@ -971,7 +971,7 @@ namespace OlympUpgrade
                 Declare.DEST_PATH_INSTALLSHIELD = HelpFunctions.PridajLomitko(path);
 
                 // načítam info z licencie
-                CitajRegistracnySubor(Declare.PCD_INSTALACKY, HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR));
+                LicenseVersionFunctions.CitajRegistracnySubor(Declare.PCD_INSTALACKY, HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR));
                 path = RegistryFunctions.GetOlympFolderBaseOnLic();
             }
 
@@ -1022,7 +1022,7 @@ namespace OlympUpgrade
             else
             {
                 NastavCestu(lblDest, Declare.DEST_PATH, true);
-                lblExe.Text = HelpFunctions.DajVerziuProgramu();
+                lblExe.Text = LicenseVersionFunctions.DajVerziuProgramu();
             }
         }
 
@@ -1036,100 +1036,7 @@ namespace OlympUpgrade
                 toolTip1.SetToolTip(lblDest, path);
         }
 
-        private void CitajRegistracnySubor(int PcD, string cesta, string cestaInstalacie = "")
-        {
-            cestaInstalacie = string.Empty;
-
-            // Zisti, ci registracny subor existuje
-            if (HelpFunctions.ExistujeSubor(Path.Combine(cesta, Declare.LICENCIA_SW)))
-            {
-                NacitajNovuLicenciu(PcD, Path.Combine(cesta, Declare.LICENCIA_SW));
-                return;
-            }
-
-            //NEBOL NAJDENY REGISTRACNY SUBOR
-            if (PcD == Declare.PCD_POCITAC) Declare.VerziaPC = 0; else Declare.VerziaDisketa = 0;
-            return;
-        }
-
-        private void NacitajNovuLicenciu(int PcD, string cesta)
-        {
-            long datumLicencie = 0;
-            bool prenajom = false;
-
-            using (var sr = new StreamReader(cesta))//, Encoding.GetEncoding(1250)))
-            {
-                string riadok;
-                while ((riadok = sr.ReadLine()) != null)
-                {
-                    // nahradiť \" -> "
-                    riadok = riadok.Replace("\"\"", "\"");
-
-                    string riadokUpper = riadok.ToUpperInvariant();
-                    int colon = riadok.IndexOf(':');
-
-                    if (colon < 0) continue;
-
-                    if (riadokUpper.Contains("DATUMLICENCIE"))
-                    {
-                        //datumLicencie = Val(Mid(riadok, InStr(1, riadok, ":") + 3, 4) + Mid(riadok, InStr(1, riadok, ":") + 8, 2) + Mid(riadok, InStr(1, riadok, ":") + 11, 2))
-                        string y = HelpFunctions.SafeSubstring(riadok, colon + 4, 4);
-                        string m = HelpFunctions.SafeSubstring(riadok, colon + 9, 2);
-                        string d = HelpFunctions.SafeSubstring(riadok, colon + 12, 2);
-                        long.TryParse(y + m + d, out datumLicencie);
-                    }
-                    else if (riadokUpper.Contains("PRENAJOMSOFTVERU"))
-                    {
-                        //Val(Mid(riadok, InStr(1, riadok, ":") + 1, 2)) <> 0
-                        string v = HelpFunctions.SafeSubstring(riadok, colon + 2, 1);
-                        prenajom = (HelpFunctions.ValLong(v) != 0);
-                    }
-                    else if (riadokUpper.Contains("PARTNERICO"))
-                    {
-                        //If PcD = PCD_INSTALACKY Then
-                        //    ICO_Disketa = Replace(Replace(Mid(riadok, InStr(1, riadok, ":") + 3, 20), """", ""), ",", "")
-                        //Else
-                        //    ICO_PC = Replace(Replace(Mid(riadok, InStr(1, riadok, ":") + 3, 20), """", ""), ",", "")
-                        string s = HelpFunctions.SafeSubstring(riadok, colon + 3, 20).Replace("\"", "").Replace(",", "").Replace("\\", "");
-                        if (PcD == Declare.PCD_INSTALACKY)
-                            Declare.ICO_Disketa = s;
-                        else
-                            Declare.ICO_PC = s;
-                    }
-                    else if (riadokUpper.Contains("PARTNERMENO"))
-                    {
-                        //If PcD = PCD_INSTALACKY Then
-                        //    NazovFirmyDisketa = Mid(riadok, InStr(1, riadok, ":") + 3, Len(riadok) - 4 - InStr(1, riadok, ":"))
-                        //Else
-                        //    NazovFirmyPC = Mid(riadok, InStr(1, riadok, ":") + 3, Len(riadok) - 4 - InStr(1, riadok, ":"))
-                        //End If
-                        int len = Math.Max(0, riadok.Length - 4 - colon - 3);
-                        string s = HelpFunctions.SafeSubstring(riadok, colon + 4, len);
-                        if (PcD == Declare.PCD_INSTALACKY)
-                            Declare.NazovFirmyDisketa = s;
-                        else
-                            Declare.NazovFirmyPC = s;
-                    }
-                }
-            }
-
-            if (datumLicencie != 0)
-            {
-                // ak to nie je prenájom, posuň platnosť o rok (yyyymmdd + 10000)
-                if (!prenajom) datumLicencie += 10000;
-
-                if (PcD == Declare.PCD_INSTALACKY)
-                {
-                    Declare.DatumDisketa = datumLicencie;
-                    Declare.VerziaDisketa = Declare.LIC_OSTRA;
-                }
-                else
-                {
-                    Declare.DatumPC = datumLicencie;
-                    Declare.VerziaPC = Declare.LIC_OSTRA;
-                }
-            }
-        }
+        
 
         /// <summary>
         /// vrati verziu upgrade a nastavi dalsie hodnoty zo suboru txt

@@ -38,13 +38,6 @@ namespace OlympUpgrade
         /// </summary>
         public void KopirujSubory()
         {
-            int pocet;
-            string povodnaVerziaX;
-            long povodnaVerzia, chyba;
-            bool prepis;
-            var neprepisovatDBS = new List<string>(); ;
-            //Dim chilkatEntry As New ChilkatZipEntry2
-
             try
             {
                 _progresiaPreset?.Invoke(0);
@@ -62,131 +55,8 @@ namespace OlympUpgrade
                     _Spravne.Clear();
                     _Preskocene.Clear();
 
-                    _PomCol.Clear();
-
-                    chyba = 1;
-
-                    if (zip.Entries.Count > 0)
-                    {
-                        // toto plati pre adresarik data
-                        neprepisovatDBS.Clear();
-
-                        var dataEntrie = zip.Entries.Where(e => e.FullName.ToUpper().Contains(@"DATA/")
-                                                                        && e.Length > 0);
-
-                        foreach (var entry in dataEntrie)
-                        {
-                            var zipPath = entry.FullName.Replace('\\', '/');
-
-                            // iba položky pod "DATA/"
-                            if (zipPath.StartsWith("DATA/", StringComparison.OrdinalIgnoreCase))
-                            {
-                                // plná cieľová cesta na disku
-                                var destPath = Path.Combine(Declare.DEST_PATH, zipPath.Replace('/', Path.DirectorySeparatorChar));
-
-                                if (!File.Exists(destPath))
-                                {
-                                    prepis = true;
-                                    foreach (var dbName in neprepisovatDBS)
-                                    {
-                                        var guardedPrefix = "data/pripojenedata/" + dbName;
-                                        if (zipPath.StartsWith(guardedPrefix, StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            prepis = false;
-                                            break;
-                                        }
-                                    }
-
-                                    if (prepis)
-                                    {
-                                        try
-                                        {
-                                            Directory.CreateDirectory(Path.GetDirectoryName(destPath));
-                                            entry.ExtractToFile(destPath, overwrite: true);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            Declare.Errors.Add(ex.ToString());
-                                            _PomCol.Add(destPath);
-                                            chyba++;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    // ak už existuje a je to MDB, pridaj jeho názov (bez prípony) do "neprepisovať"
-                                    if (string.Equals(Path.GetExtension(zipPath), ".mdb", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        var name = Path.GetFileNameWithoutExtension(zipPath).ToLowerInvariant();
-                                        neprepisovatDBS.Add(name);
-                                    }
-                                }
-                            }
-                            _progresiaTik?.Invoke();
-                        }
-                    }
-
-                    if (chyba != 1 || _PomCol.Count > 0)
-                    {
-                        PridajChybu(); // call your method
-
-                        var target = Path.Combine(Declare.DEST_PATH, "DATA");
-
-                        MessageBox.Show(
-                            "Nastala chyba pri kopírovaní súborov do adresára " + target + Environment.NewLine + Environment.NewLine +
-                            "Súbory, ktoré sa nepodarilo nainštalovať, budú uvedené na konci inštalácie aj s typom chyby.",
-                            Declare.TTITLE,
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error
-                        );
-                    }
-
-                    // zmazem vsetky REPORTY\*.RPT okrem REPORTY\OB_FA*.RPT
-                    try
-                    {
-                        long parseVal = 0;
-                        povodnaVerziaX = HelpFunctions.DajVerziuProgramu();
-                        if (povodnaVerziaX.IndexOf(".") > -1)
-                            long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
-                        povodnaVerzia = parseVal * 100;
-
-                        parseVal = 0;
-                        if (povodnaVerziaX.IndexOf(".") > -1)
-                        {
-                            povodnaVerziaX = povodnaVerziaX.Substring(povodnaVerziaX.IndexOf(".") + 1);
-                            long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
-                        }
-                        povodnaVerzia = povodnaVerzia + parseVal;
-
-                        if (povodnaVerzia < 946)
-                        {
-                            var rep = Path.Combine(Declare.DEST_PATH, "REPORTY");
-                            if (Directory.Exists(rep))
-                            {
-                                foreach (var file in Directory.EnumerateFiles(rep))
-                                    File.Delete(file);
-                            }
-                        }
-
-                        //vzdy mazem len systemove reporty a uzivatelske nechavam
-                        //---RPT REPORTY---
-                        VymazZostavy("Reporty\\", "rpt");
-                        VymazZostavy("Reporty\\", "repx");
-                        //---XLS REPORTY---
-                        VymazZostavy("Reporty\\EXCEL\\", "xls");
-                        VymazZostavy("Reporty\\EXCEL\\", "pdf"); //v zostavach pre excel bude aj navod v pdf
-                                                                 //---PDF REPORTY-- -
-                        VymazZostavy("Reporty\\PDF\\", "pdf");
-
-                    }
-                    catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
-
-                    // --- rozbal systémové reporty podľa listov ---
-                    RozbalZostavy(zip, "Reporty\\", "\\.rpt", Declare.FILE_REPORTY_TXT);
-                    RozbalZostavy(zip, "Reporty\\", "\\.repx", Declare.FILE_REPORTY_TXT);
-                    RozbalZostavy(zip, "Reporty\\Excel\\", "\\.xls", Declare.FILE_REPORTY_EXCEL_TXT);
-                    RozbalZostavy(zip, "Reporty\\Excel\\", "\\.pdf", Declare.FILE_REPORTY_EXCEL_P_TXT);
-                    RozbalZostavy(zip, "Reporty\\Pdf\\", "\\.pdf", Declare.FILE_REPORTY_PDF_TXT);
+                    CopyTo_Data(zip);
+                    CopyTo_Reporty(zip);
 
 
                     // --- GRAFIKA\*.*  ---
@@ -275,94 +145,7 @@ namespace OlympUpgrade
                     // --- Close ZIP ---
                 }
 
-                // --- Presun ZIP/installer do UPGRADE pripadne zmaz ak existuje ---
-                var upgradeZipFile = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_ZIP);
-                if (HelpFunctions.ExistujeSubor(upgradeZipFile))
-                {
-                    HelpFunctions.TryToDeleteFile(upgradeZipFile);
-                }
-
-                //Copy SUBOR_ZIP
-                try
-                {
-                    var upgradeDir = Path.Combine(Declare.DEST_PATH, "UPGRADE");
-                    Directory.CreateDirectory(upgradeDir);
-
-                    var upgradeZipPath = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_ZIP);
-
-                    _setLabelInfo?.Invoke(upgradeZipPath);
-
-                    bool copyOk = true;
-                    try
-                    {
-                        var src = Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP);
-                        File.Copy(src, upgradeZipPath, overwrite: true);
-                    }
-                    catch (Exception ex) { Declare.Errors.Add(ex.ToString()); copyOk = false; }
-
-                    if (copyOk)
-                    {
-                        _Spravne.Add(Path.Combine("UPGRADE", Declare.SUBOR_ZIP));
-                        //ak so spustany z akt adresara, tak vymazem OlympUpgrade.zip
-                        if (HelpFunctions.ExistujeSubor(Path.Combine(Declare.DEST_PATH, Declare.SUBOR_ZIP)))
-                            HelpFunctions.TryToDeleteFile(Path.Combine(Declare.DEST_PATH, Declare.SUBOR_ZIP));
-                    }
-                }
-                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
-
-                //Copy SUBOR_INST
-                try
-                {
-                    //od 2009 je mozne stahovat aj kompletnu instalaciu, tak ju vymazem z cieloveho adresara, ak tam je
-                    var upgradeINST_Path = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_INST);
-                    if (HelpFunctions.ExistujeSubor(upgradeINST_Path))
-                        HelpFunctions.TryToDeleteFile(upgradeINST_Path);
-
-                    Directory.CreateDirectory(Path.Combine(Declare.DEST_PATH, "UPGRADE"));
-
-                    _setLabelInfo?.Invoke(upgradeINST_Path);
-
-                    var destINST_Path = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_INST);
-                    if (HelpFunctions.ExistujeSubor(destINST_Path))
-                    {
-                        File.Copy(destINST_Path, upgradeINST_Path, overwrite: true);
-                        HelpFunctions.TryToDeleteFile(destINST_Path);
-                    }
-                }
-                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
-
-                //Copy SUBOR_INST_NEW
-                try
-                {
-                    //od 2010 sa plna instalacka vola OlympInstall.exe kvoli trojanovi
-                    var upgradeINST_NEW_Path = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_INST_NEW);
-                    var destINST_New_Path = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_INST_NEW);
-
-                    if (HelpFunctions.ExistujeSubor(Path.Combine(destINST_New_Path))
-                        && HelpFunctions.ExistujeSubor(Path.Combine(upgradeINST_NEW_Path)))
-                        HelpFunctions.TryToDeleteFile(Path.Combine(upgradeINST_NEW_Path));
-
-                    Directory.CreateDirectory(Path.Combine(Declare.DEST_PATH, "UPGRADE"));
-
-                    _setLabelInfo?.Invoke(upgradeINST_NEW_Path);
-
-                    if (HelpFunctions.ExistujeSubor(destINST_New_Path))
-                    {
-                        //File.Copy(destINST_New_Path, upgradeINST_NEW_Path, overwrite: true);
-                        HelpFunctions.TryToDeleteFile(upgradeINST_NEW_Path);
-                        File.Move(destINST_New_Path, upgradeINST_NEW_Path);
-                    }
-
-                    pocet = 0;
-                    //iba kvoli tomu, aby to neprefrcalo tak rychlo a naozaj ho stihol zmazat
-                    //ak nestihne zmazat ani po 500 tak idem dalej, asi je naozaj problem
-                    while (HelpFunctions.ExistujeSubor(destINST_New_Path) && pocet < 10)
-                    {
-                        Thread.Sleep(50);
-                        pocet = pocet + 1;
-                    }
-                }
-                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+                CopyZipAndInstaller();
 
                 _progresiaDone();
                 //ZapisVysledokDoListu();
@@ -372,6 +155,229 @@ namespace OlympUpgrade
                 Declare.Errors.Add(ex.ToString());
                 MessageBox.Show($"Nastala chyba pri rozzipovani Erl : {ex.ToString()}\r\n\r\n {VratZoznam()}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void CopyZipAndInstaller()
+        {
+            int pocet;
+
+            // --- Presun ZIP/installer do UPGRADE pripadne zmaz ak existuje ---
+            var upgradeZipFile = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_ZIP);
+            if (HelpFunctions.ExistujeSubor(upgradeZipFile))
+            {
+                HelpFunctions.TryToDeleteFile(upgradeZipFile);
+            }
+
+            //Copy SUBOR_ZIP
+            try
+            {
+                var upgradeDir = Path.Combine(Declare.DEST_PATH, "UPGRADE");
+                Directory.CreateDirectory(upgradeDir);
+
+                var upgradeZipPath = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_ZIP);
+
+                _setLabelInfo?.Invoke(upgradeZipPath);
+
+                bool copyOk = true;
+                try
+                {
+                    var src = Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP);
+                    File.Copy(src, upgradeZipPath, overwrite: true);
+                }
+                catch (Exception ex) { Declare.Errors.Add(ex.ToString()); copyOk = false; }
+
+                if (copyOk)
+                {
+                    _Spravne.Add(Path.Combine("UPGRADE", Declare.SUBOR_ZIP));
+                    //ak so spustany z akt adresara, tak vymazem OlympUpgrade.zip
+                    if (HelpFunctions.ExistujeSubor(Path.Combine(Declare.DEST_PATH, Declare.SUBOR_ZIP)))
+                        HelpFunctions.TryToDeleteFile(Path.Combine(Declare.DEST_PATH, Declare.SUBOR_ZIP));
+                }
+            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+
+            //Copy SUBOR_INST
+            try
+            {
+                //od 2009 je mozne stahovat aj kompletnu instalaciu, tak ju vymazem z cieloveho adresara, ak tam je
+                var upgradeINST_Path = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_INST);
+                if (HelpFunctions.ExistujeSubor(upgradeINST_Path))
+                    HelpFunctions.TryToDeleteFile(upgradeINST_Path);
+
+                Directory.CreateDirectory(Path.Combine(Declare.DEST_PATH, "UPGRADE"));
+
+                _setLabelInfo?.Invoke(upgradeINST_Path);
+
+                var destINST_Path = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_INST);
+                if (HelpFunctions.ExistujeSubor(destINST_Path))
+                {
+                    File.Copy(destINST_Path, upgradeINST_Path, overwrite: true);
+                    HelpFunctions.TryToDeleteFile(destINST_Path);
+                }
+            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+
+            //Copy SUBOR_INST_NEW
+            try
+            {
+                //od 2010 sa plna instalacka vola OlympInstall.exe kvoli trojanovi
+                var upgradeINST_NEW_Path = Path.Combine(Declare.DEST_PATH, "UPGRADE", Declare.SUBOR_INST_NEW);
+                var destINST_New_Path = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_INST_NEW);
+
+                if (HelpFunctions.ExistujeSubor(Path.Combine(destINST_New_Path))
+                    && HelpFunctions.ExistujeSubor(Path.Combine(upgradeINST_NEW_Path)))
+                    HelpFunctions.TryToDeleteFile(Path.Combine(upgradeINST_NEW_Path));
+
+                Directory.CreateDirectory(Path.Combine(Declare.DEST_PATH, "UPGRADE"));
+
+                _setLabelInfo?.Invoke(upgradeINST_NEW_Path);
+
+                if (HelpFunctions.ExistujeSubor(destINST_New_Path))
+                {
+                    //File.Copy(destINST_New_Path, upgradeINST_NEW_Path, overwrite: true);
+                    HelpFunctions.TryToDeleteFile(upgradeINST_NEW_Path);
+                    File.Move(destINST_New_Path, upgradeINST_NEW_Path);
+                }
+
+                pocet = 0;
+                //iba kvoli tomu, aby to neprefrcalo tak rychlo a naozaj ho stihol zmazat
+                //ak nestihne zmazat ani po 500 tak idem dalej, asi je naozaj problem
+                while (HelpFunctions.ExistujeSubor(destINST_New_Path) && pocet < 10)
+                {
+                    Thread.Sleep(50);
+                    pocet = pocet + 1;
+                }
+            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+        }
+
+        private void CopyTo_Reporty(ZipArchive zip)
+        {
+            string povodnaVerziaX;
+            long povodnaVerzia;
+            // zmazem vsetky REPORTY\*.RPT okrem REPORTY\OB_FA*.RPT
+            try
+            {
+                long parseVal = 0;
+                povodnaVerziaX = LicenseVersionFunctions.DajVerziuProgramu();
+                if (povodnaVerziaX.IndexOf(".") > -1)
+                    long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
+                povodnaVerzia = parseVal * 100;
+
+                parseVal = 0;
+                if (povodnaVerziaX.IndexOf(".") > -1)
+                {
+                    povodnaVerziaX = povodnaVerziaX.Substring(povodnaVerziaX.IndexOf(".") + 1);
+                    long.TryParse(povodnaVerziaX.Substring(0, povodnaVerziaX.IndexOf(".")), out parseVal);
+                }
+                povodnaVerzia = povodnaVerzia + parseVal;
+
+                if (povodnaVerzia < 946)
+                {
+                    var rep = Path.Combine(Declare.DEST_PATH, "REPORTY");
+                    if (Directory.Exists(rep))
+                    {
+                        foreach (var file in Directory.EnumerateFiles(rep))
+                            File.Delete(file);
+                    }
+                }
+
+                //vzdy mazem len systemove reporty a uzivatelske nechavam
+                //---RPT REPORTY---
+                VymazZostavy("Reporty\\", "rpt");
+                VymazZostavy("Reporty\\", "repx");
+                //---XLS REPORTY---
+                VymazZostavy("Reporty\\EXCEL\\", "xls");
+                VymazZostavy("Reporty\\EXCEL\\", "pdf"); //v zostavach pre excel bude aj navod v pdf
+                                                         //---PDF REPORTY-- -
+                VymazZostavy("Reporty\\PDF\\", "pdf");
+
+            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+
+            // --- rozbal systémové reporty podľa listov ---
+            RozbalZostavy(zip, "Reporty\\", "\\.rpt", Declare.FILE_REPORTY_TXT);
+            RozbalZostavy(zip, "Reporty\\", "\\.repx", Declare.FILE_REPORTY_TXT);
+            RozbalZostavy(zip, "Reporty\\Excel\\", "\\.xls", Declare.FILE_REPORTY_EXCEL_TXT);
+            RozbalZostavy(zip, "Reporty\\Excel\\", "\\.pdf", Declare.FILE_REPORTY_EXCEL_P_TXT);
+            RozbalZostavy(zip, "Reporty\\Pdf\\", "\\.pdf", Declare.FILE_REPORTY_PDF_TXT);
+        }
+
+        /// <summary>
+        /// Copies files from the 'DATA/' directory within the specified ZIP archive to the destination path, handling
+        /// existing files and error reporting as needed.
+        /// </summary>
+        /// <remarks>Files are only copied if they do not already exist at the destination. If a Microsoft
+        /// Access database file (.mdb) already exists, its name is added to an internal list to prevent overwriting
+        /// related files in subsequent operations. Any errors encountered during extraction are recorded for later
+        /// inspection.</remarks>
+        /// <param name="zip">The ZIP archive containing the files to be copied from the 'DATA/' directory. Must not be null.</param>
+        private void CopyTo_Data(ZipArchive zip)
+        {
+            _PomCol.Clear();
+
+            bool prepis;
+            var neprepisovatDBS = new List<string>();
+
+            if (zip.Entries.Count > 0)
+            {
+                // toto plati pre adresarik data
+                neprepisovatDBS.Clear();
+
+                var dataEntrie = zip.Entries.Where(e => e.FullName.ToUpper().Contains(@"DATA/")
+                                                                && e.Length > 0);
+
+                foreach (var entry in dataEntrie)
+                {
+                    var zipPath = entry.FullName.Replace('\\', '/');
+
+                    // iba položky pod "DATA/"
+                    if (zipPath.StartsWith("DATA/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // plná cieľová cesta na disku
+                        var destPath = Path.Combine(Declare.DEST_PATH, zipPath.Replace('/', Path.DirectorySeparatorChar));
+
+                        if (!File.Exists(destPath))
+                        {
+                            prepis = true;
+                            foreach (var dbName in neprepisovatDBS)
+                            {
+                                var guardedPrefix = "data/pripojenedata/" + dbName;
+                                if (zipPath.StartsWith(guardedPrefix, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    prepis = false;
+                                    break;
+                                }
+                            }
+
+                            if (prepis)
+                            {
+                                try
+                                {
+                                    Directory.CreateDirectory(Path.GetDirectoryName(destPath));
+                                    entry.ExtractToFile(destPath, overwrite: true);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Declare.Errors.Add(ex.ToString());
+                                    _PomCol.Add(destPath);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // ak už existuje a je to MDB, pridaj jeho názov (bez prípony) do "neprepisovať"
+                            if (string.Equals(Path.GetExtension(zipPath), ".mdb", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var name = Path.GetFileNameWithoutExtension(zipPath).ToLowerInvariant();
+                                neprepisovatDBS.Add(name);
+                            }
+                        }
+                    }
+                    _progresiaTik?.Invoke();
+                }
+            }
+            CheckCopyException(Path.Combine(Declare.DEST_PATH, "DATA"));
         }
 
         private string VratZoznam()
@@ -390,7 +396,6 @@ namespace OlympUpgrade
 
             return sb.ToString();
         }
-
 
         private void ExtractFileOnPath(ZipArchive zip, string destPath, string filePath, string subor)
         {
@@ -427,29 +432,14 @@ namespace OlympUpgrade
 
         private void VymazStareSubory()
         {
-            DeleteMatching(Declare.DEST_PATH, "Mzdy.exe");
+            HelpFunctions.DeleteMatching(Declare.DEST_PATH, "Mzdy.exe");
 
-            DeleteMatching(Declare.DEST_PATH, "DevExpress.*");
+            HelpFunctions.DeleteMatching(Declare.DEST_PATH, "DevExpress.*");
 
             string skDir = Path.Combine(Declare.DEST_PATH, "sk");
-            DeleteMatching(skDir, "DevExpress.*");
+            HelpFunctions.DeleteMatching(skDir, "DevExpress.*");
 
-            DeleteMatching(Declare.DEST_PATH, "Kros.Licenses*");
-        }
-
-        private static void DeleteMatching(string directory, string searchPattern)
-        {
-            if (!Directory.Exists(directory)) return;
-
-            try
-            {
-                foreach (var file in Directory.EnumerateFiles(directory, searchPattern, SearchOption.TopDirectoryOnly))
-                {
-                    try { File.SetAttributes(file, FileAttributes.Normal); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
-                    try { File.Delete(file); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
-                }
-            }
-            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+            HelpFunctions.DeleteMatching(Declare.DEST_PATH, "Kros.Licenses*");
         }
 
         private void CopyFileIfExists(string sourcePath, string destPath, string file)

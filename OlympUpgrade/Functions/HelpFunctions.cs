@@ -7,37 +7,6 @@ namespace OlympUpgrade
 {
     internal class HelpFunctions
     {
-
-        /// <summary>
-        /// Vrati verziu .exe
-        /// </summary>
-        /// <returns></returns>
-        public static string DajVerziuProgramu()
-        {
-            var pathExe = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_EXE);
-            var pathExeStary = Path.Combine(Declare.DEST_PATH, Declare.SUBOR_EXE_STARY);
-
-            if (File.Exists(pathExe))
-            {
-                HelpFunctions.DajVerziuExe(pathExe, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
-                if (Declare.P_MAJOR == 0)
-                    return Declare.VERZIA_NEZNAMA;
-                else
-                    return HelpFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
-            }
-            else if (File.Exists(pathExeStary))
-            {
-                HelpFunctions.DajVerziuExe(pathExeStary, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
-                if (Declare.P_MAJOR == 0)
-                    return Declare.VERZIA_NEZNAMA;
-                else
-                    return HelpFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
-            }
-
-            Declare.P_MAJOR = 0;
-            return Declare.VERZIA_NEZNAMA;
-        }
-
         public static DateTime IntYyyymmddToDate(long ymd) =>
             new DateTime((int)ymd / 10000, (int)(ymd / 100) % 100, (int)ymd % 100);
 
@@ -67,6 +36,31 @@ namespace OlympUpgrade
                 if (!string.IsNullOrWhiteSpace(filePath)
                     && File.Exists(filePath))
                     File.Delete(filePath);
+            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+        }
+
+        /// <summary>
+        /// Deletes all files in the specified directory that match the given search pattern.
+        /// </summary>
+        /// <remarks>File attributes are reset to normal before deletion. Errors encountered during file
+        /// deletion or attribute modification are recorded in the Declare.Errors collection. Only files in the
+        /// top-level of the specified directory are affected; subdirectories are not searched.</remarks>
+        /// <param name="directory">The path to the directory in which to search for files to delete. If the directory does not exist, no action
+        /// is taken.</param>
+        /// <param name="searchPattern">The search string used to match the names of files to delete. Wildcard characters such as '*' and '?' are
+        /// supported.</param>
+        public static void DeleteMatching(string directory, string searchPattern)
+        {
+            if (!Directory.Exists(directory)) return;
+
+            try
+            {
+                foreach (var file in Directory.EnumerateFiles(directory, searchPattern, SearchOption.TopDirectoryOnly))
+                {
+                    try { File.SetAttributes(file, FileAttributes.Normal); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+                    try { File.Delete(file); } catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+                }
             }
             catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
         }

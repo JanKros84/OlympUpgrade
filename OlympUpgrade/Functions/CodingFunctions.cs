@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace OlympUpgrade
 {
-    internal class Kodovanie
+    internal class CodingFunctions
     {
         public static string Zahesluj(string zdroj)
         {
