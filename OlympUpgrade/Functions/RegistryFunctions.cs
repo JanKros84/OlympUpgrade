@@ -85,7 +85,7 @@ namespace OlympUpgrade
                         Registry.ClassesRoot,
                         $@"Installer\Products\{RegProductCode}",
                         "ProductName",
-                        $"OLYMP {HelpFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
+                        $"OLYMP {LicenseVersionFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
                 }
 
                 //MessageBox.Show("BEFORE reg OLYMP22 S-1-5-18");
@@ -97,7 +97,7 @@ namespace OlympUpgrade
                         Registry.LocalMachine,
                         installProps,
                         "DisplayName",
-                        $"OLYMP {HelpFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
+                        $"OLYMP {LicenseVersionFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
 
                     //MessageBox.Show("AFTER reg OLYMP22");
                 }
@@ -109,13 +109,13 @@ namespace OlympUpgrade
                         Registry.LocalMachine,
                         uninstallKey,
                         "DisplayName",
-                        $"OLYMP {HelpFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
+                        $"OLYMP {LicenseVersionFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION)}");
 
                     ZapisHodnotuReg(
                        Registry.LocalMachine,
                         uninstallKey,
                         "DisplayVersion",
-                        HelpFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION));
+                        LicenseVersionFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION));
                 }
             }
 

@@ -282,42 +282,6 @@ namespace OlympUpgrade
             catch (Exception ex) { Declare.Errors.Add(ex.ToString() + $"\r\nmeno: {meno}"); return false; }
         }
 
-        /// <summary>
-        /// vrati verziu alfa.exe ??? CRV2Kros.exe ???
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="MAJOR"></param>
-        /// <param name="MINOR"></param>
-        /// <param name="REVISION"></param>
-        public static void DajVerziuExe(string fileName, out int MAJOR, out int MINOR, out int REVISION)
-        {
-            MAJOR = 0;
-            MINOR = 0;
-            REVISION = 0;
-
-            var fvi = FileVersionInfo.GetVersionInfo(fileName);
-            MAJOR = fvi.FileMajorPart;
-            MINOR = fvi.FileMinorPart;
-            REVISION = fvi.FilePrivatePart;
-        }
-
-        /// <summary>
-        /// vrati verziu ako string
-        /// </summary>
-        /// <param name="MAJOR"></param>
-        /// <param name="MINOR"></param>
-        /// <param name="REVISION"></param>
-        /// <param name="nepouzitRevision"></param>
-        /// <returns></returns>
-        public static string DajVerziuString(int MAJOR, int MINOR, int REVISION, bool nepouzitRevision = false)
-        {
-            string s = $"{MAJOR:0}.{MINOR:00}";
-            if (!nepouzitRevision)
-                s += $".{REVISION:00}";
-            return s;
-        }
-
-
         public static long DiskSpaceKB(string path)
         {
             if (string.IsNullOrWhiteSpace(path))

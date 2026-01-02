@@ -1,10 +1,108 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace OlympUpgrade
 {
     internal class LicenseVersionFunctions
     {
+        public static bool ReadVersionTxt(string verzieTxtPath)
+        {
+            try
+            {
+                string s;
+                int i;
+                using (StreamReader reader = new StreamReader(verzieTxtPath))
+                {
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.MAJOR = int.Parse(s.Substring(i + 1));
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.MINOR = int.Parse(s.Substring(i + 1));
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.REVISION = int.Parse(s.Substring(i + 1));
+
+                    // Skipping 3 lines
+                    for (int j = 0; j < 3; j++)
+                        reader.ReadLine();
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.MIN_MAJOR = int.Parse(s.Substring(i + 1));
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.MIN_MINOR = int.Parse(s.Substring(i + 1));
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.MIN_REVISION = int.Parse(s.Substring(i + 1));
+
+                    // Skipping 3 lines
+                    for (int j = 0; j < 3; j++)
+                        reader.ReadLine();
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.VNUTORNY_DATUM_DEN = int.Parse(s.Substring(i + 1));
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.VNUTORNY_DATUM_MESIAC = int.Parse(s.Substring(i + 1));
+
+                    s = reader.ReadLine();
+                    i = s.IndexOf("=");
+                    Declare.VNUTORNY_DATUM_ROK = int.Parse(s.Substring(i + 1));
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Declare.Errors.Add(ex.ToString());
+                return false;
+            }
+            finally { HelpFunctions.TryToDeleteFile(verzieTxtPath); }
+        }
+
+        /// <summary>
+        /// vrati verziu alfa.exe ??? CRV2Kros.exe ???
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="MAJOR"></param>
+        /// <param name="MINOR"></param>
+        /// <param name="REVISION"></param>
+        public static void DajVerziuExe(string fileName, out int MAJOR, out int MINOR, out int REVISION)
+        {
+            MAJOR = 0;
+            MINOR = 0;
+            REVISION = 0;
+
+            var fvi = FileVersionInfo.GetVersionInfo(fileName);
+            MAJOR = fvi.FileMajorPart;
+            MINOR = fvi.FileMinorPart;
+            REVISION = fvi.FilePrivatePart;
+        }
+
+        /// <summary>
+        /// vrati verziu ako string
+        /// </summary>
+        /// <param name="MAJOR"></param>
+        /// <param name="MINOR"></param>
+        /// <param name="REVISION"></param>
+        /// <param name="nepouzitRevision"></param>
+        /// <returns></returns>
+        public static string DajVerziuString(int MAJOR, int MINOR, int REVISION, bool nepouzitRevision = false)
+        {
+            string s = $"{MAJOR:0}.{MINOR:00}";
+            if (!nepouzitRevision)
+                s += $".{REVISION:00}";
+            return s;
+        }
 
         /// <summary>
         /// Vrati verziu .exe
@@ -17,19 +115,19 @@ namespace OlympUpgrade
 
             if (File.Exists(pathExe))
             {
-                HelpFunctions.DajVerziuExe(pathExe, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
+                LicenseVersionFunctions.DajVerziuExe(pathExe, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
                 if (Declare.P_MAJOR == 0)
                     return Declare.VERZIA_NEZNAMA;
                 else
-                    return HelpFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
+                    return LicenseVersionFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
             }
             else if (File.Exists(pathExeStary))
             {
-                HelpFunctions.DajVerziuExe(pathExeStary, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
+                LicenseVersionFunctions.DajVerziuExe(pathExeStary, out Declare.P_MAJOR, out Declare.P_MINOR, out Declare.P_REVISION);
                 if (Declare.P_MAJOR == 0)
                     return Declare.VERZIA_NEZNAMA;
                 else
-                    return HelpFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
+                    return LicenseVersionFunctions.DajVerziuString(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION);
             }
 
             Declare.P_MAJOR = 0;

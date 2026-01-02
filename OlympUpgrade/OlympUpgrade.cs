@@ -324,7 +324,7 @@ namespace OlympUpgrade
                     {
                         // porovnám pôvodnú verziu a novú
                         string crv2Path = Path.Combine(Declare.DEST_PATH, "CRV2Kros.exe");
-                        HelpFunctions.DajVerziuExe(crv2Path, out P_CRV2_MAJOR, out P_CRV2_MINOR, out P_CRV2_REVISION);
+                        LicenseVersionFunctions.DajVerziuExe(crv2Path, out P_CRV2_MAJOR, out P_CRV2_MINOR, out P_CRV2_REVISION);
 
                         string oldV = $"{P_CRV2_MAJOR}.{P_CRV2_MINOR}.{P_CRV2_REVISION}";
                         string newV = $"{Declare.N_CRV2_MAJOR}.{Declare.N_CRV2_MINOR}.{Declare.N_CRV2_REVISION}";
@@ -1072,7 +1072,7 @@ namespace OlympUpgrade
             }
 
             // Čítanie VERZIA_TXT súboru a získavanie údajov
-            if (!ReadVersionTxt(verziaTxtPath))
+            if (!LicenseVersionFunctions.ReadVersionTxt(verziaTxtPath))
             {
                 Declare.ExitProg(Declare.ID_CHYBA_CHYBA_ZIP);
                 return string.Empty;
@@ -1090,75 +1090,12 @@ namespace OlympUpgrade
                 return string.Empty;
             }
 
-            HelpFunctions.DajVerziuExe(Path.Combine(tempAdr, "CRV2Kros.exe"), out Declare.N_CRV2_MAJOR, out Declare.N_CRV2_MINOR, out Declare.N_CRV2_REVISION);
+            LicenseVersionFunctions.DajVerziuExe(Path.Combine(tempAdr, "CRV2Kros.exe"), out Declare.N_CRV2_MAJOR, out Declare.N_CRV2_MINOR, out Declare.N_CRV2_REVISION);
             HelpFunctions.TryToDeleteFile(cRV2KrosFile);
 
-            return HelpFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION);
+            return LicenseVersionFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION);
         }
-
-        private bool ReadVersionTxt(string verzieTxtPath)
-        {
-            try
-            {
-                string s;
-                int i;
-                using (StreamReader reader = new StreamReader(verzieTxtPath))
-                {
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.MAJOR = int.Parse(s.Substring(i + 1));
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.MINOR = int.Parse(s.Substring(i + 1));
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.REVISION = int.Parse(s.Substring(i + 1));
-
-                    // Skipping 3 lines
-                    for (int j = 0; j < 3; j++)
-                        reader.ReadLine();
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.MIN_MAJOR = int.Parse(s.Substring(i + 1));
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.MIN_MINOR = int.Parse(s.Substring(i + 1));
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.MIN_REVISION = int.Parse(s.Substring(i + 1));
-
-                    // Skipping 3 lines
-                    for (int j = 0; j < 3; j++)
-                        reader.ReadLine();
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.VNUTORNY_DATUM_DEN = int.Parse(s.Substring(i + 1));
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.VNUTORNY_DATUM_MESIAC = int.Parse(s.Substring(i + 1));
-
-                    s = reader.ReadLine();
-                    i = s.IndexOf("=");
-                    Declare.VNUTORNY_DATUM_ROK = int.Parse(s.Substring(i + 1));
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Declare.Errors.Add(ex.ToString());
-                return false;
-            }
-            finally { HelpFunctions.TryToDeleteFile(verzieTxtPath); }
-        }
-
+           
         private string ExtractFileFromUpgradeZip(string desAdr, string fileName)
         {
             string resFilePath = Path.Combine(desAdr, fileName);
