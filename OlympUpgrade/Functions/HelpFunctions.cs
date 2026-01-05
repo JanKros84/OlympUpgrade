@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
@@ -7,6 +8,78 @@ namespace OlympUpgrade
 {
     internal class HelpFunctions
     {
+        /// <summary>
+        /// 0 - nie je nainstalovany
+        ///-1 - je nainstalovany acrobat reader
+        /// 1 - je nainstalovany acrobat (aj writer)
+        /// </summary>
+        /// <returns></returns>
+        public static int IsAcrobatReaderInstalled()
+        {
+            if (RegistryFunctions.CitajHodnotuReg(Registry.LocalMachine,
+                                    @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACRORD32.EXE",
+                                    "",
+                                    out object _))
+                return -1;
+
+            if (RegistryFunctions.CitajHodnotuReg(Registry.LocalMachine,
+                                    @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACROBAT.EXE",
+                                    "",
+                                    out object _))
+                return 1;
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Minimal 528040 -> .NET Framework 4.8
+        /// </summary>
+        /// <returns></returns>
+        public static bool MamDostatocnyFramework()
+        {
+            if (RegistryFunctions.CitajHodnotuReg(Registry.LocalMachine,
+                                    @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full",
+                                    "Release",
+                                    out object val))
+            {
+                if (val is int verzia
+                    && verzia >= 528040) // 528040 -> .NET Framework 4.8
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static void InstalujHotFixPreMapi()
+        {
+            try
+            {
+                // Windows 7 / Server 2008 R2 == 6.1
+                Version v = Environment.OSVersion.Version;
+                if (v.Major == 6 && v.Minor == 1)
+                {
+                    // pick 32/64-bit package
+                    string fileName = Environment.Is64BitOperatingSystem ? "Win61x64.msu" : "Win61x86.msu";
+                    string msuPath = Path.Combine(Declare.DEST_PATH ?? string.Empty, "Zdroje", fileName);
+
+                    if (File.Exists(msuPath))
+                    {
+                        var psi = new ProcessStartInfo
+                        {
+                            FileName = "wusa.exe",
+                            Arguments = $"\"{msuPath}\" /quiet /norestart",
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            WindowStyle = ProcessWindowStyle.Hidden
+                        };
+
+                        Process.Start(psi);
+                    }
+                }
+            }
+            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
+        }
+
         public static DateTime IntYyyymmddToDate(long ymd) =>
             new DateTime((int)ymd / 10000, (int)(ymd / 100) % 100, (int)ymd % 100);
 

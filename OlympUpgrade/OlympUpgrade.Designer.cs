@@ -56,6 +56,7 @@
             this.label9 = new System.Windows.Forms.Label();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.linkLabelEmail = new System.Windows.Forms.LinkLabel();
             this.linkLabelThx = new System.Windows.Forms.LinkLabel();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.linkLabelKros = new System.Windows.Forms.LinkLabel();
@@ -78,7 +79,7 @@
             this.btnStorno = new System.Windows.Forms.Button();
             this.lblCopyright = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.linkLabelEmail = new System.Windows.Forms.LinkLabel();
+            this.label7 = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -385,6 +386,18 @@
             this.panel4.Size = new System.Drawing.Size(404, 352);
             this.panel4.TabIndex = 5;
             // 
+            // linkLabelEmail
+            // 
+            this.linkLabelEmail.AutoSize = true;
+            this.linkLabelEmail.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
+            this.linkLabelEmail.Location = new System.Drawing.Point(11, 197);
+            this.linkLabelEmail.Name = "linkLabelEmail";
+            this.linkLabelEmail.Size = new System.Drawing.Size(79, 13);
+            this.linkLabelEmail.TabIndex = 14;
+            this.linkLabelEmail.TabStop = true;
+            this.linkLabelEmail.Text = "olymp@kros.sk";
+            this.linkLabelEmail.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabelEmail_LinkClicked);
+            // 
             // linkLabelThx
             // 
             this.linkLabelThx.LinkArea = new System.Windows.Forms.LinkArea(188, 11);
@@ -423,7 +436,7 @@
             // 
             // label8
             // 
-            this.label8.Location = new System.Drawing.Point(11, 238);
+            this.label8.Location = new System.Drawing.Point(11, 239);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(140, 33);
             this.label8.TabIndex = 10;
@@ -541,6 +554,7 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.label7);
             this.panel1.Controls.Add(this.btnSpat);
             this.panel1.Controls.Add(this.btnDalej);
             this.panel1.Controls.Add(this.btnOk);
@@ -598,23 +612,23 @@
             // lblCopyright
             // 
             this.lblCopyright.AutoSize = true;
-            this.lblCopyright.Location = new System.Drawing.Point(19, 15);
+            this.lblCopyright.Location = new System.Drawing.Point(23, 15);
             this.lblCopyright.Name = "lblCopyright";
             this.lblCopyright.Size = new System.Drawing.Size(61, 13);
             this.lblCopyright.TabIndex = 0;
             this.lblCopyright.Text = "lblCopyright";
             // 
-            // linkLabelEmail
+            // label7
             // 
-            this.linkLabelEmail.AutoSize = true;
-            this.linkLabelEmail.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
-            this.linkLabelEmail.Location = new System.Drawing.Point(11, 197);
-            this.linkLabelEmail.Name = "linkLabelEmail";
-            this.linkLabelEmail.Size = new System.Drawing.Size(79, 13);
-            this.linkLabelEmail.TabIndex = 14;
-            this.linkLabelEmail.TabStop = true;
-            this.linkLabelEmail.Text = "olymp@kros.sk";
-            this.linkLabelEmail.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabelEmail_LinkClicked);
+            this.label7.BackColor = System.Drawing.Color.Black;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.label7.ForeColor = System.Drawing.Color.LawnGreen;
+            this.label7.Location = new System.Drawing.Point(2, 12);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(18, 18);
+            this.label7.TabIndex = 5;
+            this.label7.Text = "N";
+            this.toolTip1.SetToolTip(this.label7, "New OlympUpgrade.exe");
             // 
             // OlympUpgrade
             // 
@@ -706,6 +720,7 @@
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.LinkLabel linkLabelThx;
         private System.Windows.Forms.LinkLabel linkLabelEmail;
+        private System.Windows.Forms.Label label7;
     }
 }
 

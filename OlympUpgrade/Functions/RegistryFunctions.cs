@@ -18,7 +18,7 @@ namespace OlympUpgrade
         }
 
         /// <summary>
-        /// Zistím, či daná licencia už bola na PC – ak áno, nasmerujem inštaláciu na jej adresár
+        /// Zistím z reg., či daná licencia už bola na PC – ak áno, nasmerujem inštaláciu na jej adresár
         /// </summary>
         /// <returns></returns>
         public static string GetOlympFolderBaseOnLic()
@@ -42,7 +42,7 @@ namespace OlympUpgrade
         }
 
         /// <summary>
-        /// Zistím, či je nainštalovaný OLYMP -> čítam InstallLocation z HKLM\...\Uninstall\{ProductCode}
+        /// Zistím z reg., či je nainštalovaný OLYMP -> čítam InstallLocation z HKLM\...\Uninstall\{ProductCode}
         /// </summary>
         /// <param name="path"></param>
         /// <param name="nacital"></param>
@@ -155,47 +155,6 @@ namespace OlympUpgrade
             }
         }
 
-        /// <summary>
-        /// 0 - nie je nainstalovany
-        ///-1 - je nainstalovany acrobat reader
-        /// 1 - je nainstalovany acrobat (aj writer)
-        /// </summary>
-        /// <returns></returns>
-        public static int IsAcrobatReaderInstalled()
-        {
-            if (CitajHodnotuReg(Registry.LocalMachine,
-                                    @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACRORD32.EXE",
-                                    "",
-                                    out object _))
-                return -1;
-
-            if (CitajHodnotuReg(Registry.LocalMachine,
-                                    @"Software\Microsoft\Windows\CurrentVersion\App Paths\ACROBAT.EXE",
-                                    "",
-                                    out object _))
-                return 1;
-
-            return 0;
-        }
-
-        /// <summary>
-        /// Minimal 528040 -> .NET Framework 4.8
-        /// </summary>
-        /// <returns></returns>
-        public static bool MamDostatocnyFramework()
-        {
-            if (CitajHodnotuReg(Registry.LocalMachine,
-                                    @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full",
-                                    "Release",
-                                    out object val))
-            {
-                if (val is int verzia
-                    && verzia >= 528040) // 528040 -> .NET Framework 4.8
-                    return true;
-            }
-
-            return false;
-        }
 
         #region RegistriOperations
 
@@ -228,7 +187,7 @@ namespace OlympUpgrade
         /// <param name="meno_polozky"></param>
         /// <param name="vystup">out value</param>
         /// <returns></returns>
-        private static bool CitajHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky, out object vystup)
+        public static bool CitajHodnotuReg(RegistryKey skupina_kluca, string meno_kluca, string meno_polozky, out object vystup)
         {
             vystup = null;
             try

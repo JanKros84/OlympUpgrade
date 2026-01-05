@@ -62,6 +62,7 @@
     <Compile Include="Functions\HelpFunctions.cs" />
     <Compile Include="Functions\CodingFunctions.cs" />
     <Compile Include="Functions\LicenseVersionFunctions.cs" />
+    <Compile Include="Functions\ZipFunctions.cs" />
     <Compile Include="OlympUpgrade.cs">
       <SubType>Form</SubType>
     </Compile>

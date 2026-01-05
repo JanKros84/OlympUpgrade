@@ -6,6 +6,64 @@ namespace OlympUpgrade
 {
     internal class LicenseVersionFunctions
     {
+        /// <summary>
+        /// vrati verziu upgrade a nastavi dalsie hodnoty zo suboru txt
+        /// </summary>
+        /// <returns></returns>
+        public static string DajVerziuUpgrade()
+        {
+            string tempAdr = string.Empty;
+
+            // Skontrolujeme, či existuje ZIP súbor
+            if (!File.Exists(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP)))
+            {
+                Declare.ExitProg(Declare.ID_CHYBA_NIE_JE_ZIP);
+                return string.Empty;
+            }
+
+            tempAdr = HelpFunctions.DajTemp(Declare.AKT_ADRESAR);
+            if (string.IsNullOrEmpty(tempAdr))
+            {
+                if (HelpFunctions.JeAdresarSpravny(Declare.DEST_PATH))
+                    tempAdr = Declare.DEST_PATH;
+            }
+
+            if (string.IsNullOrEmpty(tempAdr))
+                return string.Empty;
+
+            //rozbalim VERZIA_TXT do tempu
+            var verziaTxtPath = ZipFunctions.ExtractFileFromUpgradeZip(tempAdr, Declare.VERZIA_TXT);
+            if (string.IsNullOrEmpty(verziaTxtPath))
+            {
+                Declare.ExitProg(Declare.ID_CHYBA_CHYBA_ZIP);
+                return string.Empty;
+            }
+
+            // Čítanie VERZIA_TXT súboru a získavanie údajov
+            if (!LicenseVersionFunctions.ReadVersionTxt(verziaTxtPath))
+            {
+                Declare.ExitProg(Declare.ID_CHYBA_CHYBA_ZIP);
+                return string.Empty;
+            }
+
+            tempAdr = HelpFunctions.DajSystemTemp();
+            if (string.IsNullOrEmpty(tempAdr))
+                return string.Empty;
+
+            // Extrahovanie ďalšieho súboru CRV2Kros.exe
+            var cRV2KrosFile = ZipFunctions.ExtractFileFromUpgradeZip(tempAdr, "CRV2Kros.exe");
+            if (string.IsNullOrEmpty(cRV2KrosFile))
+            {
+                Declare.ExitProg(Declare.ID_CHYBA_CHYBA_ZIP2);
+                return string.Empty;
+            }
+
+            LicenseVersionFunctions.DajVerziuExe(Path.Combine(tempAdr, "CRV2Kros.exe"), out Declare.N_CRV2_MAJOR, out Declare.N_CRV2_MINOR, out Declare.N_CRV2_REVISION);
+            HelpFunctions.TryToDeleteFile(cRV2KrosFile);
+
+            return LicenseVersionFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION);
+        }
+
         public static bool ReadVersionTxt(string verzieTxtPath)
         {
             try

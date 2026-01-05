@@ -88,7 +88,7 @@ namespace OlympUpgrade
 
                     tabControl1.SelectTab(1);
                     Application.DoEvents();
-                    lblUpgrade.Text = DajVerziuUpgrade();
+                    lblUpgrade.Text = LicenseVersionFunctions.DajVerziuUpgrade();
                 }
                 else if (!string.IsNullOrEmpty(Declare.COMMAND_LINE_ARGUMENT)
                     && (Declare.COMMAND_LINE_ARGUMENT.ToUpper() == Declare.SUBOR_STARA_INSTALACIA_EXE.ToUpper()
@@ -389,7 +389,7 @@ namespace OlympUpgrade
 
                 if (!string.Equals(Declare.DEST_PATH, Declare.DEST_PATH_NEZNAMY, StringComparison.OrdinalIgnoreCase) && Declare.MAJOR == 0)
                 {
-                    lblUpgrade.Text = DajVerziuUpgrade();
+                    lblUpgrade.Text = LicenseVersionFunctions.DajVerziuUpgrade();
                     lblExe.Text = LicenseVersionFunctions.DajVerziuProgramu();
                     btnOk.Enabled = true;
                     this.Text = $"OLYMP {lblUpgrade.Text} - Sprievodca inštaláciou";
@@ -609,7 +609,7 @@ namespace OlympUpgrade
             ZapisVysledokDoListu(copyUpgradeFiles);
             Application.DoEvents();
 
-            InstalujHotFixPreMapi();//TODO Win61xXX.msu sa nenachdza v Zdroje
+            HelpFunctions.InstalujHotFixPreMapi();//TODO Win61xXX.msu sa nenachdza v Zdroje
             Application.DoEvents();
 
             RegistryFunctions.UlozDoRegistrovVerziu();
@@ -674,37 +674,7 @@ namespace OlympUpgrade
                 if (btnOk.Visible) btnOk.Focus();
             }
         }
-
-        private void InstalujHotFixPreMapi()
-        {
-            try
-            {
-                // Windows 7 / Server 2008 R2 == 6.1
-                Version v = Environment.OSVersion.Version;
-                if (v.Major == 6 && v.Minor == 1)
-                {
-                    // pick 32/64-bit package
-                    string fileName = Environment.Is64BitOperatingSystem ? "Win61x64.msu" : "Win61x86.msu";
-                    string msuPath = Path.Combine(Declare.DEST_PATH ?? string.Empty, "Zdroje", fileName);
-
-                    if (File.Exists(msuPath))
-                    {
-                        var psi = new ProcessStartInfo
-                        {
-                            FileName = "wusa.exe",
-                            Arguments = $"\"{msuPath}\" /quiet /norestart",
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            WindowStyle = ProcessWindowStyle.Hidden
-                        };
-
-                        Process.Start(psi);
-                    }
-                }
-            }
-            catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
-        }
-
+              
         /// <summary>
         /// Zapise vysledok instalacie do listboxu
         /// </summary>
@@ -779,7 +749,8 @@ namespace OlympUpgrade
             lblDestFile.Refresh();
 
             VolneMiesto = HelpFunctions.DiskSpaceKB(Declare.DEST_PATH);
-            PotrebnaVelkost = DajVelkostSuborovVZip(HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR) + Declare.SUBOR_ZIP) / 1024d;
+            PotrebnaVelkost = ZipFunctions.DajVelkostSuborovVZip(HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR) + Declare.SUBOR_ZIP, 
+                                                                    ProgresiaPreset, ProgresiaTik) / 1024d;
 
             if (VolneMiesto < 0 || PotrebnaVelkost > VolneMiesto)
             {
@@ -822,42 +793,7 @@ namespace OlympUpgrade
 
             ProgresiaDone();
         }
-
-        /// <summary>
-        /// vrati nekomprimovanu velkost suborov v zip v bytoch
-        /// </summary>
-        /// <param name="pathZip"></param>
-        /// <returns></returns>
-        public long DajVelkostSuborovVZip(string pathZip)
-        {
-            if (string.IsNullOrWhiteSpace(pathZip) || !File.Exists(pathZip))
-                return 0;
-
-            long sum = 0;
-
-            using (ZipArchive zip = ZipFile.Open(pathZip, ZipArchiveMode.Read, Declare.ZipEncoding))
-            {
-                ProgresiaPreset(zip.Entries.Count);
-
-                foreach (var e in zip.Entries)
-                {
-                    try
-                    {
-                        // Rátame iba súbory (nie adresáre)
-                        bool isDirectory = e.Name.Length == 0 || e.FullName.EndsWith("/", StringComparison.Ordinal);
-                        if (!isDirectory)
-                        {
-                            sum += e.Length; // uncompressed size/
-                        }
-                    }
-                    catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
-
-                    ProgresiaTik();
-                }
-            }
-            return sum;
-        }
-
+           
         /// <summary>
         /// kontrola licencie
         /// </summary>
@@ -951,9 +887,9 @@ namespace OlympUpgrade
         private void NastavCestuVerzie(string cesta = "")
         {
             // zistím potrebné verzie
-            lblUpgrade.Text = DajVerziuUpgrade();
+            lblUpgrade.Text = LicenseVersionFunctions.DajVerziuUpgrade();
 
-            if (!RegistryFunctions.MamDostatocnyFramework())
+            if (!HelpFunctions.MamDostatocnyFramework())
             {
                 Declare.ExitProg(Declare.ID_CHYBA_CHYBA_FRAMEWORK);
                 return;
@@ -1035,94 +971,7 @@ namespace OlympUpgrade
             if (tooltp)
                 toolTip1.SetToolTip(lblDest, path);
         }
-
-        
-
-        /// <summary>
-        /// vrati verziu upgrade a nastavi dalsie hodnoty zo suboru txt
-        /// </summary>
-        /// <returns></returns>
-        public string DajVerziuUpgrade()
-        {
-            string tempAdr = string.Empty;
-
-            // Skontrolujeme, či existuje ZIP súbor
-            if (!File.Exists(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP)))
-            {
-                Declare.ExitProg(Declare.ID_CHYBA_NIE_JE_ZIP);
-                return string.Empty;
-            }
-
-            tempAdr = HelpFunctions.DajTemp(Declare.AKT_ADRESAR);
-            if (string.IsNullOrEmpty(tempAdr))
-            {
-                if (HelpFunctions.JeAdresarSpravny(Declare.DEST_PATH))
-                    tempAdr = Declare.DEST_PATH;
-            }
-
-            if (string.IsNullOrEmpty(tempAdr))
-                return string.Empty;
-
-            //rozbalim VERZIA_TXT do tempu
-            var verziaTxtPath = ExtractFileFromUpgradeZip(tempAdr, Declare.VERZIA_TXT);
-            if (string.IsNullOrEmpty(verziaTxtPath))
-            {
-                Declare.ExitProg(Declare.ID_CHYBA_CHYBA_ZIP);
-                return string.Empty;
-            }
-
-            // Čítanie VERZIA_TXT súboru a získavanie údajov
-            if (!LicenseVersionFunctions.ReadVersionTxt(verziaTxtPath))
-            {
-                Declare.ExitProg(Declare.ID_CHYBA_CHYBA_ZIP);
-                return string.Empty;
-            }
-
-            tempAdr = HelpFunctions.DajSystemTemp();
-            if (string.IsNullOrEmpty(tempAdr))
-                return string.Empty;
-
-            // Extrahovanie ďalšieho súboru CRV2Kros.exe
-            var cRV2KrosFile = ExtractFileFromUpgradeZip(tempAdr, "CRV2Kros.exe");
-            if (string.IsNullOrEmpty(cRV2KrosFile))
-            {
-                Declare.ExitProg(Declare.ID_CHYBA_CHYBA_ZIP2);
-                return string.Empty;
-            }
-
-            LicenseVersionFunctions.DajVerziuExe(Path.Combine(tempAdr, "CRV2Kros.exe"), out Declare.N_CRV2_MAJOR, out Declare.N_CRV2_MINOR, out Declare.N_CRV2_REVISION);
-            HelpFunctions.TryToDeleteFile(cRV2KrosFile);
-
-            return LicenseVersionFunctions.DajVerziuString(Declare.MAJOR, Declare.MINOR, Declare.REVISION);
-        }
-           
-        private string ExtractFileFromUpgradeZip(string desAdr, string fileName)
-        {
-            string resFilePath = Path.Combine(desAdr, fileName);
-            try
-            {
-                using (ZipArchive zip = ZipFile.Open(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP), ZipArchiveMode.Read, Declare.ZipEncoding))
-                {
-                    var entry = zip.Entries//zip.GetEntry(fileName);
-                           .FirstOrDefault(e => string.Equals(e.FullName, fileName,
-                                                                StringComparison.OrdinalIgnoreCase));
-
-                    entry.ExtractToFile(resFilePath, overwrite: true);
-                }
-
-                if (!string.IsNullOrWhiteSpace(resFilePath)
-                    && File.Exists(resFilePath))
-                    return resFilePath;
-                else
-                    return string.Empty;
-            }
-            catch (Exception ex)
-            {
-                Declare.Errors.Add(ex.ToString());
-                HelpFunctions.TryToDeleteFile(resFilePath);
-                return string.Empty;
-            }
-        }
+                
 
         private void HideTabs()
         {
@@ -1181,7 +1030,7 @@ namespace OlympUpgrade
             string basePath = HelpFunctions.DajCestuOXAdresarovVyssie(Declare.AKT_ADRESAR, 3);
             string cesta = Path.Combine(basePath, Declare.CestaAcrobat, Declare.SuborAcrobat);
 
-            if (RegistryFunctions.IsAcrobatReaderInstalled() == 0 && File.Exists(cesta))
+            if (HelpFunctions.IsAcrobatReaderInstalled() == 0 && File.Exists(cesta))
             {
                 string prompt =
                     "Inštalátor zistil, že vo vašom počítači nie je nainštalovaný program Adobe Acrobat Reader, " +
