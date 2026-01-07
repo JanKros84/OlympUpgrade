@@ -17,7 +17,7 @@ namespace OlympUpgrade
         private List<string> _Preskocene = new List<string>();
         private List<string> _PomCol = new List<string>();
 
-        public List<string> Chybne { get => _Chybne;}
+        public List<string> Chybne { get => _Chybne; }
         public List<string> Spravne { get => _Spravne; }
         public List<string> Preskocene { get => _Preskocene; }
 
@@ -34,7 +34,7 @@ namespace OlympUpgrade
         }
 
         /// <summary>
-        /// Prida subory, ktore nebolo mozne nakopirovat kvoli chybe
+        /// Samotne kopirovanie suborov
         /// </summary>
         public void KopirujSubory()
         {
@@ -55,8 +55,8 @@ namespace OlympUpgrade
                     _Spravne.Clear();
                     _Preskocene.Clear();
 
-                    CopyTo_Data(zip);
-                    CopyTo_Reporty(zip);
+                    Copy_Data(zip);
+                    Copy_Reporty(zip);
 
 
                     // --- GRAFIKA\*.*  ---
@@ -145,7 +145,7 @@ namespace OlympUpgrade
                     // --- Close ZIP ---
                 }
 
-                CopyZipAndInstaller();
+                Copy_ZipAndInstaller();
 
                 _progresiaDone();
                 //ZapisVysledokDoListu();
@@ -157,7 +157,7 @@ namespace OlympUpgrade
             }
         }
 
-        private void CopyZipAndInstaller()
+        private void Copy_ZipAndInstaller()
         {
             int pocet;
 
@@ -251,7 +251,7 @@ namespace OlympUpgrade
             catch (Exception ex) { Declare.Errors.Add(ex.ToString()); }
         }
 
-        private void CopyTo_Reporty(ZipArchive zip)
+        private void Copy_Reporty(ZipArchive zip)
         {
             string povodnaVerziaX;
             long povodnaVerzia;
@@ -304,6 +304,9 @@ namespace OlympUpgrade
         }
 
         /// <summary>
+        /// ked mu nastavim aby neprepisoval subory co tam uz su tak to aj tak nespravy takze mu radsej povieme ktore rozbalovat
+        /// toto plati pre adresarik data
+        ///
         /// Copies files from the 'DATA/' directory within the specified ZIP archive to the destination path, handling
         /// existing files and error reporting as needed.
         /// </summary>
@@ -312,7 +315,7 @@ namespace OlympUpgrade
         /// related files in subsequent operations. Any errors encountered during extraction are recorded for later
         /// inspection.</remarks>
         /// <param name="zip">The ZIP archive containing the files to be copied from the 'DATA/' directory. Must not be null.</param>
-        private void CopyTo_Data(ZipArchive zip)
+        private void Copy_Data(ZipArchive zip)
         {
             _PomCol.Clear();
 
@@ -321,7 +324,6 @@ namespace OlympUpgrade
 
             if (zip.Entries.Count > 0)
             {
-                // toto plati pre adresarik data
                 neprepisovatDBS.Clear();
 
                 var dataEntrie = zip.Entries.Where(e => e.FullName.ToUpper().Contains(@"DATA/")
@@ -339,6 +341,7 @@ namespace OlympUpgrade
 
                         if (!File.Exists(destPath))
                         {
+                            //teraz skontrolujeme ci subor nie je pripojeny k databaze, ktore sa prepisovat nebude
                             prepis = true;
                             foreach (var dbName in neprepisovatDBS)
                             {
@@ -352,6 +355,7 @@ namespace OlympUpgrade
 
                             if (prepis)
                             {
+                                //ak suborcek tam este nie je alebo nepatri k databaze, ktora tam uz je tak ho tam mozme rozbalit
                                 try
                                 {
                                     Directory.CreateDirectory(Path.GetDirectoryName(destPath));
@@ -367,6 +371,7 @@ namespace OlympUpgrade
                         else
                         {
                             // ak už existuje a je to MDB, pridaj jeho názov (bez prípony) do "neprepisovať"
+                            // ak sa tam databaza s takymto nazvom nachadza, zapiseme si to)
                             if (string.Equals(Path.GetExtension(zipPath), ".mdb", StringComparison.OrdinalIgnoreCase))
                             {
                                 var name = Path.GetFileNameWithoutExtension(zipPath).ToLowerInvariant();
@@ -650,6 +655,9 @@ namespace OlympUpgrade
             }
         }
 
+        /// <summary>
+        /// Prida subory, ktore nebolo mozne nakopirovat kvoli chybe
+        /// </summary>
         private void PridajChybu()
         {
             if (_PomCol != null && _PomCol.Count > 0)

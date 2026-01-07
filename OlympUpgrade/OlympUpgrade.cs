@@ -281,7 +281,7 @@ namespace OlympUpgrade
                 else
                 {
                     // nie je splnena poziadavka minimalnej verzie
-                    if (HelpFunctions.JePrvaVerziaStarsia(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION, Declare.MIN_MAJOR, Declare.MIN_MINOR, Declare.MIN_REVISION) == -1)
+                    if (LicenseVersionFunctions.JePrvaVerziaStarsia(Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION, Declare.MIN_MAJOR, Declare.MIN_MINOR, Declare.MIN_REVISION) == -1)
                     {
                         MessageBox.Show(
                             "V zadanom adresári " + Declare.DEST_PATH + " nemáte nainštalovanú minimálnu požadovanú verziu programu OLYMP. " +
@@ -294,7 +294,7 @@ namespace OlympUpgrade
                     }
 
                     // upgrade je starsi ako nainstalovana verzia
-                    if (splna && HelpFunctions.JePrvaVerziaStarsia(Declare.MAJOR, Declare.MINOR, Declare.REVISION, Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION) == -1)
+                    if (splna && LicenseVersionFunctions.JePrvaVerziaStarsia(Declare.MAJOR, Declare.MINOR, Declare.REVISION, Declare.P_MAJOR, Declare.P_MINOR, Declare.P_REVISION) == -1)
                     {
                         var res = MessageBox.Show(
                             "V zadanom adresári " + Declare.DEST_PATH + " je nainštalovaná novšia verzia programu OLYMP " +
@@ -552,11 +552,11 @@ namespace OlympUpgrade
             }
         }
 
-        private string GetResultFile() => Path.Combine(Declare.DEST_PATH, $"Instal_Olymp_datum[{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}]_cas[{DateTime.Now.Hour}-{DateTime.Now.Minute}-{DateTime.Now.Second}].log");
+        private string GetResultFile() => Path.Combine(Declare.DEST_PATH, $"Instal_Olymp_datum[{DateTime.Now.Year:00}-{DateTime.Now.Month:00}-{DateTime.Now.Day:00}]" +
+                                                                            $"_cas[{DateTime.Now.Hour:00}-{DateTime.Now.Minute:00}-{DateTime.Now.Second:00}].log");
 
         private void SaveResults(string file)
         {
-
             // Attempt to delete the file if it already exists
             if (File.Exists(file))
             {
@@ -584,6 +584,7 @@ namespace OlympUpgrade
                     {
                         sw.WriteLine(error);
                         sw.WriteLine("------");
+                        sw.WriteLine();
                     }
                 }
             }
@@ -749,8 +750,8 @@ namespace OlympUpgrade
             lblDestFile.Refresh();
 
             VolneMiesto = HelpFunctions.DiskSpaceKB(Declare.DEST_PATH);
-            PotrebnaVelkost = ZipFunctions.DajVelkostSuborovVZip(HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR) + Declare.SUBOR_ZIP, 
-                                                                    ProgresiaPreset, ProgresiaTik) / 1024d;
+            PotrebnaVelkost = ZipFunctions.DajVelkostSuborovVZip(HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR) + Declare.SUBOR_ZIP,
+                                                                    ProgresiaPreset, ProgresiaTik) / 1024d + (10 * 1024);// +10MB
 
             if (VolneMiesto < 0 || PotrebnaVelkost > VolneMiesto)
             {
@@ -764,7 +765,7 @@ namespace OlympUpgrade
                     prompt = $"Nastala chyba pri zisťovaní voľného miesta na cieľovom disku {destDiskLetter}." +
                                prompt;
                 }
-                else if (PotrebnaVelkost > VolneMiesto)// * 1024 TODO ???) //Je malo miesta
+                else if (PotrebnaVelkost > VolneMiesto) //Je malo miesta
                 {
                     prompt = $"Na cieľovom disku {destDiskLetter} je nedostatok voľného miesta." +
                                    prompt;
@@ -972,7 +973,6 @@ namespace OlympUpgrade
                 toolTip1.SetToolTip(lblDest, path);
         }
                 
-
         private void HideTabs()
         {
             tabControl1.Appearance = TabAppearance.FlatButtons;

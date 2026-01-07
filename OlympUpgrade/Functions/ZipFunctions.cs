@@ -12,7 +12,7 @@ namespace OlympUpgrade
     {
         public static string ExtractFileFromUpgradeZip(string desAdr, string fileName)
         {
-            string resFilePath = Path.Combine(desAdr, fileName);
+            string resFilePath = Path.Combine(desAdr, fileName); 
             try
             {
                 using (ZipArchive zip = ZipFile.Open(Path.Combine(Declare.AKT_ADRESAR, Declare.SUBOR_ZIP), ZipArchiveMode.Read, Declare.ZipEncoding))

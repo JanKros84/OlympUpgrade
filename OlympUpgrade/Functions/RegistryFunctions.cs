@@ -101,7 +101,7 @@ namespace OlympUpgrade
 
                     //MessageBox.Show("AFTER reg OLYMP22");
                 }
-
+                //$@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode}";
                 string uninstallKey = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{ProductCode}";
                 if (ExistujeKlucReg(Registry.LocalMachine, uninstallKey))
                 {

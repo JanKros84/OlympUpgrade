@@ -368,37 +368,6 @@ namespace OlympUpgrade
 
             return di.AvailableFreeSpace / 1024;
         }
-
-        /// <summary>
-        /// '-1 ak je prva starsia, 0 ak sa rovnaju a 1 ak je druha starsia
-        /// </summary>
-        /// <param name="major1"></param>
-        /// <param name="minor1"></param>
-        /// <param name="revision1"></param>
-        /// <param name="major2"></param>
-        /// <param name="minor2"></param>
-        /// <param name="revision2"></param>
-        /// <param name="porovnavatRevision"></param>
-        /// <returns></returns>
-        public static int JePrvaVerziaStarsia(
-                            int major1, int minor1, int revision1,
-                            int major2, int minor2, int revision2,
-                            bool porovnavatRevision = true)
-        {
-            if (major1 == major2)
-            {
-                if (minor1 == minor2)
-                {
-                    if (porovnavatRevision)
-                    {
-                        if (revision1 == revision2) return 0;
-                        return revision1 < revision2 ? -1 : 1;
-                    }
-                    return 0;
-                }
-                return minor1 < minor2 ? -1 : 1;
-            }
-            return major1 < major2 ? -1 : 1;
-        }
+               
     }
 }
