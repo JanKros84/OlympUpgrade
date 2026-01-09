@@ -9,6 +9,26 @@ namespace OlympUpgrade
 {
     internal class CodingFunctions
     {
+        /// <summary>
+        /// Maska pre vytváranie pola kódov Crc32Tab (štandardný CRC32 polynóm)
+        /// </summary>
+        private const int Mask = unchecked((int)0xEDB88320);
+
+        /// <summary>
+        /// Pole crc kódov pre rýchle urcenie crc textu
+        /// </summary>
+        private static readonly int[] Crc32Tab = new int[256];
+
+        private static bool Crc32Init = false;
+
+        /// <summary>
+        /// Oznacuje, ci bolo Crc pole inicializované
+        /// </summary>
+        public static bool Crc32Initialized
+        {
+            get { return Crc32Init; }
+        }
+
         public static string Zahesluj(string zdroj)
         {
             //'Funkcia zahesluje vstupny reazec
@@ -103,6 +123,86 @@ namespace OlympUpgrade
             //vrati retazec pod akym je v registroch jednoznacne identifikovana dana registracka
             //(pre pripad ze by som to dakedy chcel menit), pouzijem toto vsade
             return Zahesluj(ICO + PorCislo);
+        }
+
+        private static void InicializujTabulkuCrcKodov()
+        {
+            for (short c = 0; c <= 255; c++)
+            {
+                byte znak = (byte)c;
+                int crc = 0;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    if (((crc ^ znak) & 1) != 0)
+                        crc = ShrLong(crc, 1) ^ Mask;
+                    else
+                        crc = ShrLong(crc, 1);
+
+                    znak >>= 1;
+                }
+
+                Crc32Tab[c] = crc;
+            }
+
+            Crc32Init = true;
+        }
+
+        /// <summary>
+        /// Procedúra inicializuje tabulku, pre rýchly výpocet crc
+        /// </summary>
+        public static string VypocitajCrc(string zdroj, int dlzka, int crc)
+        {
+            crc = ~crc;
+
+            if (!Crc32Init)
+                InicializujTabulkuCrcKodov();
+
+            for (int i = 1; i <= dlzka; i++)
+            {
+                crc = Crc32Tab[(crc & 255) ^ (byte)zdroj[i - 1]] ^ ShrLong8(crc);
+            }
+
+            return Long2HexStr(~crc);
+        }
+
+        public static int ShrLong(int arg, byte posun)
+        {
+            if (posun == 0)
+                return arg;
+
+            if (posun > 32)
+                return 0;
+
+            // Ošetrenie záporných čísel (logický posun)
+            if (arg < 0)
+            {
+                arg = arg ^ unchecked((int)0xFFFFFFFF);
+                arg = arg / 2;
+                arg = arg ^ 0x7FFFFFFF;
+                posun--;
+            }
+
+            return arg / (1 << posun);
+        }
+
+        public static int ShrLong8(int arg)
+        {
+            if (arg < 0)
+            {
+                arg = arg ^ unchecked((int)0xFFFFFFFF);
+                arg = arg / 256;
+                return arg ^ 0x00FFFFFF;
+            }
+            else
+            {
+                return arg / 256;
+            }
+        }
+        
+        public static string Long2HexStr(int arg)
+        {
+            return arg.ToString("X8");
         }
     }
 }

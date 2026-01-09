@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Remoting.Contexts;
+using System.Text;
 
 namespace OlympUpgrade
 {
@@ -202,10 +204,195 @@ namespace OlympUpgrade
                 NacitajNovuLicenciu(PcD, Path.Combine(cesta, Declare.LICENCIA_SW));
                 return;
             }
+            else if (!HelpFunctions.ExistujeSubor(cesta + Declare.LICENCIA))
+            {
+                //NEBOL NAJDENY REGISTRACNY SUBOR
+                if (PcD == Declare.PCD_POCITAC)
+                    Declare.VerziaPC = 0;
+                else
+                    Declare.VerziaDisketa = 0;
 
-            //NEBOL NAJDENY REGISTRACNY SUBOR
-            if (PcD == Declare.PCD_POCITAC) Declare.VerziaPC = 0; else Declare.VerziaDisketa = 0;
-            return;
+                return;
+            }
+
+            cesta += Declare.LICENCIA;
+
+
+            StringBuilder kodovanyStrB = new StringBuilder();
+            using (FileStream fs = new FileStream(cesta, FileMode.Open, FileAccess.Read))
+            {
+                int b;
+                while ((b = fs.ReadByte()) != -1)
+                {
+                    kodovanyStrB.Append((char)b);
+                }
+            }
+
+            //prazdny mzdy.reg, == chybny
+            if (kodovanyStrB.Length < 13)
+            {
+                if (PcD == Declare.PCD_POCITAC)
+                    Declare.VerziaPC = Declare.LIC_CHYBNA;
+                else
+                    Declare.VerziaDisketa = Declare.LIC_CHYBNA;
+                return;
+            }
+
+            string text = kodovanyStrB.ToString().Substring(0, 8);
+            string kodovany = kodovanyStrB.ToString().Substring(10, kodovanyStrB.Length - 12); //bez konca riadku
+
+            //zisti crc zakodovaneho textu, ci je dobry regoverenie crc
+            if (CodingFunctions.VypocitajCrc(kodovany, kodovany.Length, 0) != text)
+            {
+                //CHYBNY REGISTRACNY SUBOR
+                if (PcD == Declare.PCD_POCITAC)
+                    Declare.VerziaPC = Declare.LIC_CHYBNA;
+                else
+                    Declare.VerziaDisketa = Declare.LIC_CHYBNA;
+                return;
+            }
+
+            //spracuj rozkodovany text - nacitaj cestu k datam
+            text = string.Empty;
+            CodingFunctions.Odhesluj(kodovany, out text);
+
+            int i = 0, j = -1;
+
+            //Nacitaj nazov firmy
+            i = j + 1;
+            j = text.IndexOf("\r\n", i);
+            string nazovFirmy = text.Substring(i, j - i);
+
+            if (PcD == Declare.PCD_INSTALACKY)
+                Declare.NazovFirmyDisketa = nazovFirmy;
+            else
+                Declare.NazovFirmyPC = nazovFirmy;
+
+            //Preskoc udaje o partnerovi,nastavenia
+            for (int x = 2; x <= 4; x++)
+            {
+                i = j + 2;
+                j = text.IndexOf("\r\n", i);
+            }
+
+            //Nacitam ICO firmy
+            i = j + 2;
+            j = text.IndexOf("\r\n", i);
+            string ico = /*HelpFunctions.ValLong*/(text.Substring(i, j - i));
+
+            if (PcD == Declare.PCD_INSTALACKY)
+                Declare.ICO_Disketa = ico;
+            else
+                Declare.ICO_PC = ico;
+
+            //poziciu 6 preskocim
+            i = j + 2;
+            j = text.IndexOf("\r\n", i);
+            int typInstalacieX = (i < j) ? (int)HelpFunctions.ValLong(text.Substring(i, j - i)) : 0; //typ instalacie
+
+            int sasTypLicencie = 0;
+
+            if (PcD == Declare.PCD_INSTALACKY)
+            {
+                Declare.VerziaDisketa = (typInstalacieX == 1 || typInstalacieX == 2 || typInstalacieX == 4)
+                                ? Declare.LIC_OSTRA
+                                : Declare.LIC_UPDATE;
+
+                //precitaj datum registracie
+                for (int x = 7; x <= 10; x++)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+                }
+
+                if (j > 0)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+                    Declare.DatumDisketa = (i < j) ? HelpFunctions.ValLong(text.Substring(i, j - i)) : 0;
+                }
+
+                for (int x = 12; x <= 14; x++)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+                }
+                Declare.PorCisloDisketa = /*HelpFunctions.ValLong*/(text.Substring(i, j - i));
+
+                for (int x = 16; x <= 22; x++)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+                }
+
+                if (j - i >= 0)
+                    sasTypLicencie = (int)HelpFunctions.ValLong(text.Substring(i, j - i));
+
+                //ak je sas licencia, tak datum neposuvam, inak ho posuniem o jeden rok
+                if (sasTypLicencie == 0 && Declare.DatumDisketa != 0)
+                    Declare.DatumDisketa += 10000;
+            }
+            else //licencia na pocitaci
+            {
+                //preskoc, co nie je potrebne citat
+                for (int x = 7; x <= 10; x++)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+                }
+
+                //precitaj cestu k datam
+                string pom = (j > 0) ? text.Substring(i, j - i) : text.Substring(i);
+                //skontroluj cestu, ci existuje
+                if (HelpFunctions.ExistujeSubor(pom))
+                    cestaInstalacie = pom;
+
+                //precitaj datum registracie
+                if (j > 0)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+
+                    // ++++++++++++++
+                    //nasledujuci riadok je tu z dovodu chyby v programe OLYMP,
+                    //ktora bola od verzie 2.05(april99) a ktora sposobovala, ze pri
+                    //zapise cesty k datam do registracneho suboru v programe sa za cestu
+                    //pridal prazdny riadok a teda sa pozicia ostatnych (datum) udajov posunula
+                    //a zle sa nacitavali tieto udaje
+                    if (i == j)
+                    {
+                        i = j + 2;
+                        j = text.IndexOf("\r\n", i);
+                    }
+                    //koniec riadku doplneneho na zachranu registracky s posunom
+
+                    Declare.DatumPC = (i < j) ? HelpFunctions.ValLong(text.Substring(i, j - i)) : 0;
+                }
+
+                for (int x = 12; x <= 14; x++)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+                }
+
+                Declare.PorCisloPC = /*HelpFunctions.ValLong*/(text.Substring(i, j - i));
+
+                for (int x = 16; x <= 22; x++)
+                {
+                    i = j + 2;
+                    j = text.IndexOf("\r\n", i);
+                }
+
+                if (j - i >= 0)
+                    sasTypLicencie = (int)HelpFunctions.ValLong(text.Substring(i, j - i));
+
+                //ak je sas licencia, tak datum neposuvam, inak ho posuniem o jeden rok
+                if (sasTypLicencie == 0 && Declare.DatumPC != 0)
+                    Declare.DatumPC += 10000;
+
+                //DOBRY REG. CESTA,KAM MOZE INSTALOVAT NASTAVENA
+                Declare.VerziaPC = Declare.LIC_OSTRA;
+            }
         }
 
         private static void NacitajNovuLicenciu(int PcD, string cesta)

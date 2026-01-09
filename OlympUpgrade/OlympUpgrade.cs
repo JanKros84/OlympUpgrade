@@ -803,6 +803,7 @@ namespace OlympUpgrade
             bool MaOstruVerziu = false;
             bool KopirujLICENCIU = false;
             string Lic = string.Empty; // koreň, odkiaľ sa kopíruje licencia (adresár inštalačiek)
+            bool LicVSysteme = false;
 
             ProgresiaPreset(0);
             lblDestFile.Text = "Kontrola licencie ...";
@@ -816,6 +817,130 @@ namespace OlympUpgrade
                 MaOstruVerziu = (Declare.VerziaPC == Declare.LIC_OSTRA);
 
                 ProgresiaTik();
+
+                //TODO Tato cast nikdy nepojde -> Mzdy.lic
+                #region Commented out code
+                // 2) Pozri licenciu na inštalačkách (ak je v akt. adresári a nie je to istý adresár ako cieľ)
+                string aktLicPath = HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR) + Declare.LICENCIA;
+                if (HelpFunctions.ExistujeSubor(aktLicPath) &&
+                    !string.Equals(HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR), Declare.DEST_PATH, StringComparison.OrdinalIgnoreCase))
+                {
+                    Lic = HelpFunctions.PridajLomitko(Declare.AKT_ADRESAR); // budem kopírovať z tohto koreňa
+                }
+
+                //TODO Tato cast nikdy nepojde -> Mzdy.lic
+                // 3) Ak je licencia na inštalačkách, ide sa inštalovať „ostrá“
+                if (!string.IsNullOrEmpty(Lic))
+                {
+                    LicenseVersionFunctions.CitajRegistracnySubor(Declare.PCD_INSTALACKY, Lic);
+
+                    if (Declare.VerziaPC != Declare.LIC_OSTRA)
+                    {
+                        // Nemá v PC ostrú verziu alebo na inštalačkách je novší licenčný súbor – kopíruj
+                        KopirujLICENCIU = true;
+                    }
+                    else
+                    {
+                        // V cieli je ostrá verzia
+                        if (HelpFunctions.ExistujeSubor(Path.Combine(Declare.DEST_PATH, Declare.LICENCIA_SW)))
+                        {
+                            // ak je v cieli nová licencia (SW), nekopíruj
+                            KopirujLICENCIU = false;
+                        }
+                        else
+                        {
+                            // Porovnaj licencie PC vs. Disketa – ak iné ICO/PorCislo a nie Install, pýtaj sa
+                            if ((Declare.ICO_Disketa != Declare.ICO_PC || Declare.PorCisloDisketa != Declare.PorCisloPC) &&
+                                !LicVSysteme &&
+                                Declare.KTO_VOLAL != Declare.VOLAL_INSTALL)
+                            {
+                                var res = MessageBox.Show(
+                                    "V cieľovom adresári sa nachádza ostrá verzia registrovaná na firmu " + Declare.NazovFirmyPC + "." +
+                                    Environment.NewLine + Environment.NewLine +
+                                    "Inštalácia obsahuje iný registračný súbor registrovaný na firmu " + Declare.NazovFirmyDisketa + "." +
+                                    Environment.NewLine + Environment.NewLine +
+                                    "Naozaj chcete inštaláciu spustiť?",
+                                    "OLYMP – inštalácia",
+                                    MessageBoxButtons.YesNo,
+                                    MessageBoxIcon.Question,
+                                    MessageBoxDefaultButton.Button2);
+
+                                if (res == DialogResult.No)
+                                {
+                                    Declare.ExitProg(0);
+                                    return;
+                                }
+                                KopirujLICENCIU = true;
+                            }
+
+                            string destLic = Path.Combine(Declare.DEST_PATH, Declare.LICENCIA);
+                            if (HelpFunctions.ExistujeSubor(destLic))
+                            {
+                                // Má licenciu v počítači – kopíruj ak je staršia alebo rovnaká, alebo ak to prikázal InstallShield
+                                bool pcLeOrEqDisk = HelpFunctions.IntYyyymmddToDate(Declare.DatumPC) <= HelpFunctions.IntYyyymmddToDate(Declare.DatumDisketa);
+
+                                if (pcLeOrEqDisk || Declare.KOPIRUJ_LICENCIU == 1)
+                                {
+                                    KopirujLICENCIU = true;
+                                }
+                                else if (Declare.KOPIRUJ_LICENCIU == 2)
+                                {
+                                    KopirujLICENCIU = false;
+                                }
+                                else
+                                {
+                                    // Na inštalačkách je starší lic. súbor – opýtať sa na prepis
+                                    var res2 = MessageBox.Show(
+                                        "Inštalačný program sa chystá skopírovať súbor " + Declare.LICENCIA + " z inštalačného média do počítača." +
+                                        Environment.NewLine + Environment.NewLine +
+                                        "Súbor " + Declare.LICENCIA + " na inštalačnom médiu je ale starší ako ten, ktorý máte v počítači." + Environment.NewLine +
+                                        "Prepísať existujúci súbor " + Declare.LICENCIA + " (" + HelpFunctions.FormatDdMmYyyy(Declare.DatumPC) + ") " +
+                                        "starším súborom " + Declare.LICENCIA + " (" + HelpFunctions.FormatDdMmYyyy(Declare.DatumDisketa) + ") z inštalačného média?",
+                                        "OLYMP – inštalácia",
+                                        MessageBoxButtons.YesNo,
+                                        MessageBoxIcon.Question,
+                                        MessageBoxDefaultButton.Button2);
+
+                                    KopirujLICENCIU = (res2 == DialogResult.Yes);
+                                }
+                            }
+                            else
+                            {
+                                // Licencia bola len v systéme → kopíruj „naisto“
+                                KopirujLICENCIU = true;
+                            }
+                        }
+                    }
+
+                    // 4) Kopírovanie licencie (ak treba)
+                    if (KopirujLICENCIU)
+                    {
+                        string destLic = Path.Combine(Declare.DEST_PATH, Declare.LICENCIA);
+                        string srcLic = Path.Combine(Lic, Declare.LICENCIA);
+
+                        try
+                        {
+                            if (File.Exists(destLic))
+                            {
+                                File.SetAttributes(destLic, FileAttributes.Normal);
+                                File.Delete(destLic);
+                            }
+                        }
+                        catch { }
+
+                        File.Copy(srcLic, destLic, overwrite: false);
+
+                        try
+                        {
+                            File.SetAttributes(destLic, FileAttributes.ReadOnly);
+                        }
+                        catch { }
+
+                        MaOstruVerziu = true;
+                        Declare.DatumPC = Declare.DatumDisketa;
+                    }
+                }
+                #endregion Commented out code
 
                 // 5) Nemá licenciu na inštalačkách a chce „ostrú“ – skontroluj nárok
                 if (MaOstruVerziu && !KopirujLICENCIU)

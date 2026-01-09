@@ -18,7 +18,7 @@ namespace OlympUpgrade
         }
 
         /// <summary>
-        /// Zistím z reg., či daná licencia už bola na PC – ak áno, nasmerujem inštaláciu na jej adresár
+        /// Zistím z reg ci dana licencia uz bol na pocitaci instalovana, ak ano, nasmerujem instalaciu na jej adresar
         /// </summary>
         /// <returns></returns>
         public static string GetOlympFolderBaseOnLic()

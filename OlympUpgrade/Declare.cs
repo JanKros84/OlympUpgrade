@@ -214,10 +214,10 @@ namespace OlympUpgrade
         public const int PCD_POCITAC = 0;
         public const int PCD_INSTALACKY = 1;
 
-        //public const int LIC_CHYBNA = -1;
+        public const int LIC_CHYBNA = -1;
         public const int LIC_NEEXISTUJE = 0;
         public const int LIC_OSTRA = 1;
-        //public const int LIC_UPDATE = 2;
+        public const int LIC_UPDATE = 2;
 
 
         /// <summary>
